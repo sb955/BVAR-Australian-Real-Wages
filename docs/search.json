@@ -7,17 +7,10 @@
     "text": "Abstract. This project uses a BVAR approach to forecast Australian real wage growth rates\nKeywords. bvars, impulse responses, quarto, R, real wage growth, inflation"
   },
   {
-    "objectID": "index.html#a-simple-example",
-    "href": "index.html#a-simple-example",
+    "objectID": "index.html#references",
+    "href": "index.html#references",
     "title": "Real Wage Growth Rate Forecasts",
-    "section": "A Simple Example",
-    "text": "A Simple Example\nThis is a Quarto document in which we can cite the bsvars package by Woźniak (2022). Look for more info at package CRAN website.\nSimply load the package by running\n\n\nWarning: package 'bsvars' was built under R version 4.3.3\n\n\nThe code below performs simple computations for sampling posterior draws of the impulse responses. The first line uploads the data from the package,another sets the seed for reproducible computations, and then the pipe |&gt; is used to streamline the model specification, estimation including the first burn-in run to obtain convergence and finally, the computed impulse responses are saved in object irf.\n\ndata(us_fiscal_lsuw)\nset.seed(123)\nus_fiscal_lsuw |&gt;\n  specify_bsvar$new(p = 1) |&gt;\n  estimate(S = 1000, show_progress = FALSE) |&gt; \n  estimate(S = 2000, show_progress = FALSE) |&gt; \n  compute_impulse_responses(horizon = 20) -&gt; irf\n\nThe code above is visible as the R chunk contains the setting #| echo: true.\nTable 1 reports the posterior means of the gross domestic product response to an unanticipated tax increase by 1 pp.\n\n\n\n\nTable 1: Impulse response of gdp to unanticipated tax increase by 1 pp. within two years\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n0\n1\n2\n3\n4\n5\n6\n7\n8\n\n\n\n\nchange in gdp [%]\n0.004\n0.004\n0.004\n0.003\n0.003\n0.003\n0.003\n0.002\n0.002\n\n\n\n\n\n\nFigure 1 presents the same reaction over the horizon of five years.\n\n\n\n\n\nFigure 1: Impulse response of gdp to unanticipated tax increase by 1 pp. within five years"
-  },
-  {
-    "objectID": "index.html#some-hints",
-    "href": "index.html#some-hints",
-    "title": "Real Wage Growth Rate Forecasts",
-    "section": "Some Hints",
-    "text": "Some Hints\nHave a look at how to work with RStudio and GitHub at: How to use git and GitHub with R.\nThese are many different ways of how to work with references in RStudio: Preview Citations.\nTo make all the R code visible on the website change the settings in the preabmble of this document to:\nexecute:\n  echo: true"
+    "section": "References",
+    "text": "References"
   }
 ]
