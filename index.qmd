@@ -1,5 +1,5 @@
 ---
-title: "New project"
+title: "Real Wage Growth Gate Forecasts"
 author: "Stephan Berke"
 
 execute:
@@ -8,13 +8,13 @@ execute:
 bibliography: references.bib
 ---
 
-> **Abstract.** Lorem ipsum irgendwas
+> **Abstract.** This project uses a BVAR approach to forecast Australian real wage growth rates
 >
-> **Keywords.** bsvars, impulse responses, quarto, R, tax shocks
+> **Keywords.** bvars, impulse responses, quarto, R, real wage growth, inflation
 
 # Introduction
 
-This is a template repository for the Research Report for **Macroeconometrics**. Learn more about about developing online reports with **quarto** at [quarto.org](https://quarto.org/).
+Explain recent history on wages and inflation and why real wages in australia dropped. This is a template repository for the Research Report for **Macroeconometrics**. Learn more about about developing online reports with **quarto** at [quarto.org](https://quarto.org/).
 
 ## A Simple Example
 
