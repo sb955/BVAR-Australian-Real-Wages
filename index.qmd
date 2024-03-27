@@ -1,6 +1,6 @@
 ---
-title: "Title of your work"
-author: "Your Name"
+title: "New project"
+author: "Stephan Berke"
 
 execute:
   echo: false
@@ -8,7 +8,7 @@ execute:
 bibliography: references.bib
 ---
 
-> **Abstract.** This is a suggested formatting for your abstract. This **quarto** document is a template for your report. It includes some basic ways of working with such documents. You are invited to learn more about developing online reports with this technology. 
+> **Abstract.** Lorem ipsum irgendwas
 >
 > **Keywords.** bsvars, impulse responses, quarto, R, tax shocks
 
@@ -21,11 +21,13 @@ This is a template repository for the Research Report for **Macroeconometrics**.
 This is a Quarto document in which we can cite the **bsvars** package by @wozniakBsvarsBayesianEstimation2022. Look for more info at [package CRAN website](https://cran.r-project.org/package=bsvars).
 
 Simply load the package by running
+
 ```{r package load}
 library(bsvars)
 ```
 
 The code below performs simple computations for sampling posterior draws of the impulse responses. The first line uploads the data from the package,another sets the seed for reproducible computations, and then the pipe `|>` is used to streamline the model specification, estimation including the first burn-in run to obtain convergence and finally, the computed impulse responses are saved in object `irf`.
+
 ```{r estimate irf}
 #| message: false
 #| echo: true
@@ -42,6 +44,7 @@ us_fiscal_lsuw |>
 The code above is visible as the **R** chunk contains the setting `#| echo: true`.
 
 @tbl-irf reports the posterior means of the gross domestic product response to an unanticipated tax increase by 1 pp.
+
 ```{r}
 #| label: tbl-irf
 #| tbl-cap: Impulse response of gdp to unanticipated tax increase by 1 pp. within two years
@@ -53,6 +56,7 @@ knitr::kable(irf_gdp_tax, digits = 3)
 ```
 
 @fig-irf presents the same reaction over the horizon of five years.
+
 ```{r}
 #| label: fig-irf
 #| fig-cap: Impulse response of gdp to unanticipated tax increase by 1 pp. within five years
@@ -68,13 +72,15 @@ lines(x = 0:20, y = irf_median, lwd = 2, col = "deepskyblue3")
 
 ## Some Hints
 
-Have a look at how to work with **RStudio** and **GitHub** at: [How to use git and GitHub with R](https://rfortherestofus.com/2021/02/how-to-use-git-github-with-r/). 
+Have a look at how to work with **RStudio** and **GitHub** at: [How to use git and GitHub with R](https://rfortherestofus.com/2021/02/how-to-use-git-github-with-r/).
 
 These are many different ways of how to work with references in **RStudio**: [Preview Citations](https://posit.co/blog/rstudio-1-4-preview-citations/).
 
 To make all the **R** code visible on the website change the settings in the preabmble of this document to:
-```
+
+```         
 execute:
   echo: true
 ```
+
 ## References {.unnumbered}
