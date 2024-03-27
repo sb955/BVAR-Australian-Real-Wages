@@ -1,5 +1,5 @@
 ---
-title: "Real Wage Growth Gate Forecasts"
+title: "Real Wage Growth Rate Forecasts"
 author: "Stephan Berke"
 
 execute:
