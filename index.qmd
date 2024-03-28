@@ -12,45 +12,87 @@ bibliography: references.bib
 >
 > **Keywords.** bvars, impulse responses, quarto, R, real wage growth, inflation
 
-# Introduction
+# Motivation
 
-Explain recent history on wages and inflation and why real wages in australia dropped. This is a template repository for the Research Report for **Macroeconometrics**. Learn more about about developing online reports with **quarto** at [quarto.org](https://quarto.org/).
+
+Since 2013, nominal wage growth rates in Australia have been unable to maintain their previous levels. Concurrently, households have experienced rising inflation, which has resulted in a decline in real wage growth rates in the recent post-COVID era.
+
 
 # Research Question
 
-This project aims to forecast real wage growth in Australia.
+Rising inflation and thus rising cost of living expenses have strained Australian households. This project aims to forecast real wage growth in Australia to provide an outlook on the development of real wages.    
 
-# Model setup
+## Model setup
 
-We will define real wage growth as Real Wage Growth (%) $= (\frac{Nominal \: Wage \: Growth \:(\%)\: -\: Inflation \: Rate \: (\%)}{1\: +\: Inflation \: Rate \: (\%)})$ x 100
+We will define real wage growth as
+
+\center{\textbf{Real Wage Growth (%) = Nominal Wage Growth (%) - Inflatoin Rate (%)}}
+
+
+```{r load packages, include=FALSE, warning=FALSE, eval=FALSE}
+rm(list = ls())
+pkgs <- c('ggplot2', 'readrba', 'readabs' )
+#install.packages(pkgs)
+lapply(pkgs, library, character.only=TRUE)
+```
 
 
 # Data
 
 This model utilizes data from the Reserve Bank of Australia and the Australian Bureau of Statistics.
-The data is accessed with the R commands  `readrba` and `readabs`.
+The data is accessed via the R commands  `readrba` and `readabs`.
 
 # Variables
 
-Y - Real wage growth consisting of nominal wage growth and inflation rate
+Y - Real wage growth consisting of nominal wage growth  and inflation rate
 
 X - Variables
+
  * Australian Labor Data 
-  + Unemployment Rate
-  + Labor productivity 
-  + Labor participation rate
-  + Minimum Wages rate
-  + Unionization
-  + Demographics
+    + Unemployment Rate 
+    + Labor productivity 
+    + Labor participation rate
+    + Minimum Wages rate
+    + Unionization
+    + Demographics
   
  * Global macroeconomic indicators
-  + Global GDP growth
-  + Technological advances
-  + Trade balances
+    + Global GDP growth
+    + Technological advances
+    + Trade balances
+    
+```{r data extraction, include=FALSE, warning=FALSE, eval=FALSE}
 
-```         
-execute:
-  echo: true
+#get data 
+#wage growth 
+wage.growth.data <- read_rba_seriesid("GWPIQP")
+nom.wage.growth <- subset(wage.growth.data, date >= as.Date("1997-12-31"))$value
+
+#inflation rate
+inflation.rate.data <- read_abs(series_id = "A2325850V")
+nom.inflation.rate <- subset(inflation.rate.data, date >= as.Date("1997-12-01"))$value
+
+#dates
+dates <- wage.growth.data$date
+
+#define real wage growth
+real.wage.growth <-nom.wage.growth - nom.inflation.rate
+
 ```
+
+```{r data extraction, include=FALSE, warning=FALSE, eval=FALSE}
+#create dataset
+data <- data.frame(dates = dates, real.wage.growth = real.wage.growth)
+```
+
+
+## Plot Real Growth Rate Over Time
+```{r}
+ggplot(data, aes(x = dates, y = real.wage.growth)) +
+  geom_line() + 
+  labs(x = "Date", y = "Real Wage Growth (%)") +
+  theme_minimal()
+```
+
 
 ## References {.unnumbered}

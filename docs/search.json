@@ -12,5 +12,26 @@
     "title": "Real Wage Growth Rate Forecasts",
     "section": "References",
     "text": "References"
+  },
+  {
+    "objectID": "index.html#r-environment",
+    "href": "index.html#r-environment",
+    "title": "Real Wage Growth Rate Forecasts",
+    "section": "R environment",
+    "text": "R environment"
+  },
+  {
+    "objectID": "index.html#plot-real-growth-rate-over-time",
+    "href": "index.html#plot-real-growth-rate-over-time",
+    "title": "Real Wage Growth Rate Forecasts",
+    "section": "Plot Real Growth Rate Over Time",
+    "text": "Plot Real Growth Rate Over Time"
+  },
+  {
+    "objectID": "index.html#model-setup",
+    "href": "index.html#model-setup",
+    "title": "Real Wage Growth Rate Forecasts",
+    "section": "Model setup",
+    "text": "Model setup\nWe will define real wage growth as\n\\center{\\textbf{Real Wage Growth (%) = Nominal Wage Growth (%) - Inflatoin Rate (%)}}"
   }
 ]
