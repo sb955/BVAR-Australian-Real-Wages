@@ -22,17 +22,31 @@ This project aims to forecast real wage growth in Australia.
 
 # Model setup
 
-We will define real wage growth as $Real Wage Growth (%) = (fraq{Nominal Wage Growth(%) - Inflation Rate (%)}{1 + Inflation Rate(%)} x 100)$
+We will define real wage growth as Real Wage Growth (%) $= (\frac{Nominal \: Wage \: Growth \:(\%)\: -\: Inflation \: Rate \: (\%)}{1\: +\: Inflation \: Rate \: (\%)})$ x 100
 
 
 # Data
 
 This model utilizes data from the Reserve Bank of Australia and the Australian Bureau of Statistics.
+The data is accessed with the R commands  `readrba` and `readabs`.
 
 # Variables
 
+Y - Real wage growth consisting of nominal wage growth and inflation rate
 
-
+X - Variables
+ * Australian Labor Data 
+  + Unemployment Rate
+  + Labor productivity 
+  + Labor participation rate
+  + Minimum Wages rate
+  + Unionization
+  + Demographics
+  
+ * Global macroeconomic indicators
+  + Global GDP growth
+  + Technological advances
+  + Trade balances
 
 ```         
 execute:
