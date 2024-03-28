@@ -144,14 +144,22 @@ ul.task-list li input[type="checkbox"] {
 </section>
 <section id="model-setup" class="level1">
 <h1>Model setup</h1>
-<p>We will define real wage growth as Real Wage Growth (%) <span class="math inline">\(= (\frac{Nominal Wage Growth(\%) - Inflation Rate (\%)}{1 + Inflation Rate(\%)})\)</span> x 100)</p>
+<p>We will define real wage growth as Real Wage Growth (%) <span class="math inline">\(= (\frac{Nominal \: Wage \: Growth \:(\%)\: -\: Inflation \: Rate \: (\%)}{1\: +\: Inflation \: Rate \: (\%)})\)</span> x 100</p>
 </section>
 <section id="data" class="level1">
 <h1>Data</h1>
-<p>This model utilizes data from the Reserve Bank of Australia and the Australian Bureau of Statistics.</p>
+<p>This model utilizes data from the Reserve Bank of Australia and the Australian Bureau of Statistics. The data is accessed with the R commands <code>readrba</code> and <code>readabs</code>.</p>
 </section>
 <section id="variables" class="level1">
 <h1>Variables</h1>
+<p>Y - Real wage growth consisting of nominal wage growth and inflation rate</p>
+<p>X - Variables * Australian Labor Data + Unemployment Rate + Labor productivity + Labor participation rate + Minimum Wages rate + Unionization + Demographics</p>
+<ul>
+<li>Global macroeconomic indicators</li>
+<li>Global GDP growth</li>
+<li>Technological advances</li>
+<li>Trade balances</li>
+</ul>
 <pre><code>execute:
   echo: true</code></pre>
 <section id="references" class="level2 unnumbered">
