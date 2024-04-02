@@ -60,7 +60,7 @@ Indicators on global economic factors will be included later in this project.
 
 Since our main indicators are based on quarterly data, all indicators are converted into quarterly time series.
 
-Given that the extracted time series data for the production price index starts in 1997, we will use this as the starting date for our analysis.
+Given that the extracted time series data for the production price index starts in 1998 Q4, we will use this as the starting date for our analysis.
 
 ```{r libraries, echo=FALSE, message=FALSE, warning=FALSE}
 library(quantmod)
