@@ -1,5 +1,5 @@
 ---
-title: "Real Wage Growth Rate Forecasts"
+title: "Forecasting Australian Real Wages"
 author: "Stephan Berke"
 
 execute:
@@ -8,91 +8,215 @@ execute:
 bibliography: references.bib
 ---
 
-> **Abstract.** This project uses a BVAR approach to forecast Australian real wage growth rates
+> **Abstract.** This project employs a Bayesian Vector Autoregression (BVAR) model to forecast Australian real wages for future periods. Beginning in 2021, Australian households experienced negative growth rates in real wages, but recent trends indicate a rebound. Therefore, a positive trajectory in real wages is anticipated for the upcoming periods.
 >
-> **Keywords.** bvars, impulse responses, quarto, R, real wage growth, inflation
-
-# Motivation
-
-
-Since 2013, nominal wage growth rates in Australia have been unable to maintain their previous levels. Concurrently, households have experienced rising inflation, which has resulted in a decline in real wage growth rates in the recent post-COVID era.
-
+> **Keywords.** BVARs, Real Wages, Inflation, Households
 
 # Research Question
 
-Rising inflation and thus rising cost of living expenses have strained Australian households. This project aims to forecast real wage growth in Australia to provide an outlook on the development of real wages.    
+This project aims to forecast real wages in Australia to provide an outlook for Australian households on the development in the upcoming periods.
+
+# Motivation
+
+The rising inflation and consequent escalation in the cost of living have imposed significant strain on Australian households (@RBA2024). Moreover, nominal wage growth rates in Australia have failed to sustain their previous levels of approximately 4% since 2013 (@ABS2024WPI). This decline in nominal wage growth has translated into a reduction in real wages for Australian households, particularly in the recent post-COVID era (@TreasuryAustralia2024). Notably, there has been a discernible upsurge in real wages since the last quarter. This project seeks to investigate whether households can anticipate further increases in real wages in the future and whether these increases are stable.
 
 ## Model setup
 
-We will define real wage growth as
+We will define real wages as:
 
-\center{\textbf{Real Wage Growth (%) = Nominal Wage Growth (%) - Inflatoin Rate (%)}}
-
-
-```{r load packages, include=FALSE, warning=FALSE, eval=FALSE}
-rm(list = ls())
-pkgs <- c('ggplot2', 'readrba', 'readabs' )
-#install.packages(pkgs)
-lapply(pkgs, library, character.only=TRUE)
+```{=tex}
+\begin{align}
+Real\: Wages\: =\: Nominal\: Wages\: -\: Inflation
+\end{align}
 ```
-
-
 # Data
 
-This model utilizes data from the Reserve Bank of Australia and the Australian Bureau of Statistics.
-The data is accessed via the R commands  `readrba` and `readabs`.
+Labor data is retrieved from the Australian Bureau of Statistics (ABS) using the readabs function. Financial data is obtained from the Reserve Bank of Australia (RBA) using the readrba function.
 
-# Variables
+The ABS releases data on average weekly earnings biannually, in May and November. As the latest data is from 5 months ago, we will utilize the Wage Price Index (WPI), which is measured quarterly (last released in December 2023).
 
-Y - Real wage growth consisting of nominal wage growth  and inflation rate
+## Indicators
 
-X - Variables
+#### Australian Labor and Financial Data
 
- * Australian Labor Data 
-    + Unemployment Rate 
-    + Labor productivity 
-    + Labor participation rate
-    + Minimum Wages rate
-    + Unionization
-    + Demographics
-  
- * Global macroeconomic indicators
-    + Global GDP growth
-    + Technological advances
-    + Trade balances
-    
-```{r data extraction, include=FALSE, warning=FALSE, eval=FALSE}
+Following indicators will be used in the model. 
+Indicators on global economic factors will be included later in this project.
 
-#get data 
-#wage growth 
-wage.growth.data <- read_rba_seriesid("GWPIQP")
-nom.wage.growth <- subset(wage.growth.data, date >= as.Date("1997-12-31"))$value
+| Indicator           | Index     | Source  | Unit        | Period    |
+|---------------------|-----------|---------|-------------|-----------|
+| Nominal Wages       | WPI       | RBA     | \%          | 1997-2024 |
+| Inflation           | CPI       | ABS     | \%          | 1948-2023 |
+| Real Wages          | WPI - CPI | ABS/RBA | \%          | 1997-2024 |
+| Producer Prices     | PPI       | ABS     | \%          | 1998-2023 |
+| Export Index        | EPI       | ABS     | \%          | 1998-2023 |
+| Import Index        | IPI       | ABS     | \%          | 1998-2023 |
+| Cost of Living      | CLI       | ABS     | \%          | 1998-2023 |
+| Unemployment        | UR        | RBA     | Individuals | 1978-2024 |
+| Labor Participation | LPR       | ABS     | \%          | 1978-2024 |
+| Log Real GDP        | Real GDP  | RBA     | Million AUD | 1959-2023 |
 
-#inflation rate
-inflation.rate.data <- read_abs(series_id = "A2325850V")
-nom.inflation.rate <- subset(inflation.rate.data, date >= as.Date("1997-12-01"))$value
-
-#dates
-dates <- wage.growth.data$date
-
-#define real wage growth
-real.wage.growth <-nom.wage.growth - nom.inflation.rate
-
-```
-
-```{r data extraction, include=FALSE, warning=FALSE, eval=FALSE}
-#create dataset
-data <- data.frame(dates = dates, real.wage.growth = real.wage.growth)
-```
+## Data extraction and transformation
 
 
-## Plot Real Growth Rate Over Time
-```{r}
-ggplot(data, aes(x = dates, y = real.wage.growth)) +
-  geom_line() + 
-  labs(x = "Date", y = "Real Wage Growth (%)") +
-  theme_minimal()
+Since our main indicators are based on quarterly data, all indicators are converted into quarterly time series.
+
+Given that the extracted time series data for the production price index starts in 1997, we will use this as the starting date for our analysis.
+
+```{r libraries, echo=FALSE, message=FALSE, warning=FALSE}
+library(quantmod)
+library(ggplot2)
+library(readrba)
+library(readabs)
+library(dplyr)
+library(xts)
+library(tframePlus)
+library(zoo)
+library(knitr)
+library(kableExtra)
+library(forecast)
+library(tseries)
 ```
 
 
-## References {.unnumbered}
+```{r data extraction, message=FALSE, warning=FALSE}
+
+#define periods
+end.period <- "2023-12-31"
+start.period <- "1998-12-01"
+
+# Get wage growth
+nom.wpi <- subset(read_rba_seriesid("GWPIPRIQP"), date >= as.Date(start.period))$value
+
+# Get inflation rate (CPI)
+cpi <- subset(read_abs(series_id = "A2325850V"), date >= as.Date(start.period))$value
+
+# Get dates
+dates <- subset(read_rba_seriesid("GWPIPRIQP"), date >= as.Date(start.period))$date
+
+# Define real wage
+real.wpi <- nom.wpi - cpi
+
+# Get producer prices (PPI)
+ppi <- subset(read_abs(series_id = "A2314866J"), date >= as.Date(start.period))$value
+
+# Get export price index (EXPI)
+expi <- subset(read_abs(series_id = "A2294887L"), date >= as.Date(start.period))$value
+
+# Get import price index (IMPI)
+impi <- subset(read_abs(series_id = "A2295766K"), date >= as.Date(start.period))$value
+
+# Get cost of living index (CLI)
+cli <- subset(read_abs(series_id = "A4083524T"), date >= as.Date(start.period))$value
+
+#unemployment data
+unemployment.data <- read_rba_seriesid("GLFSURSA")
+unempl.yl_xts <- xts(unemployment.data$value, order.by = as.Date(unemployment.data$date))
+unempl.qt <- to.quarterly(unempl.yl_xts, OHLC = FALSE)
+unempl.qt_filtered <- window(unempl.qt, start = as.yearqtr("1998 Q4"), end = as.yearqtr("2023 Q4"))
+unempl <- coredata(unempl.qt_filtered)
+
+#labor productivity
+participation.data <- read_abs(series_id = "A84423093A")
+parti.yl_xts <- xts(participation.data$value, order.by = as.Date(participation.data$date))
+parti.qt <- to.quarterly(parti.yl_xts, OHLC = FALSE)
+parti.qt_filtered <- window(parti.qt, start = as.yearqtr("1998 Q4"), end = as.yearqtr("2023 Q4"))
+parti <- coredata(parti.qt_filtered)
+
+
+#hours worked
+h.worked.data <- read_rba_seriesid("GLFMHW")
+h.worked_xts <- xts(h.worked.data$value, order.by = as.Date(h.worked.data$date))
+h.worked.qt <- to.quarterly(h.worked_xts, OHLC = FALSE)
+h.worked.qt_filtered <- window(h.worked.qt, start = as.yearqtr("1998 Q4"), end = as.yearqtr("2023 Q4"))
+h.worked <- coredata(h.worked.qt_filtered)
+log.h.worked <- log(h.worked)
+
+#real gdp
+log.real.gdp <- log(subset(read_rba_seriesid("GGDPCVGDP"), date >= as.Date(start.period))$value)
+
+```
+
+```{r labels, echo=FALSE}
+
+attr(nom.wpi, "label") <- "Nominal WPI"
+attr(cpi, "label") <- "CPI"
+attr(dates, "label") <- "Dates"
+attr(real.wpi, "label") <- "Real WPI"
+attr(ppi, "label") <- "PPI"
+attr(expi, "label") <- "EXPI"
+attr(impi, "label") <- "IMPI"
+attr(cli, "label") <- "CLI"
+attr(unempl, "label") <- "Unemployment"
+attr(parti, "label") <- "Participation"
+attr(log.h.worked, "label") <- "Log Hours Worked"
+attr(log.real.gdp, "label") <- "Log Real GDP"
+
+```
+
+
+## Descriptive Analysis
+
+### Data Overview
+
+```{r HEAD, echo=FALSE}
+
+# Create dataframe
+df <- data.frame(
+  "Nominal WPI" = nom.wpi,
+  "CPI" = cpi,
+  "Real WPI" = real.wpi,
+  "PPI" = ppi,
+  "EXPI" = expi,
+  "IMPI" = impi,
+  "CLI" = cli,
+  "Unemployment" = unempl,
+  "Participation" = parti,
+  "Log Hours Worked" = log.h.worked,
+  "Log Real GDP" = log.real.gdp
+)
+# Display the first 5 rows of the dataframe
+
+df_display <- data.frame(
+  "Date" = as.Date(dates),
+  df
+)
+kable(head(df_display, 5))
+```
+
+### Data Plots
+
+The following plots visualize the recent development of the variables of interest. The WPI started to climb recently, with the CPI decreasing at the same time. The real WPI finally begins to recover from negative growth rates in the past post-COVID era. 
+Of particular note are the stronger growth rates observed for the cost of living and the producer price index.
+
+```{r PLOTS, echo=FALSE}
+# Plot data
+var_names <- colnames(df)
+par(mfrow = c(4, 3), mar = c(2, 2, 2, 2))
+
+for (j in 1:ncol(df)) {
+  plot(x = dates, y = df[, j], type = 'l',
+       main = var_names[j], ylab = "", xlab = "",
+       lwd = 2.5,
+       ylim = c(min(df[, j], na.rm = TRUE), max(df[, j], na.rm = TRUE)))
+}
+```
+## Preliminary data analysis
+
+### ACF Analysis
+
+```{r ACF plots, echo = FALSE}
+par(mfrow = c(4, 3), mar = c(2, 2, 3, 2))
+for (j in 1:ncol(df)) {
+  acf(df[,j], main=colnames(df[j]),  )
+}
+```
+
+### PACF Analysis
+
+```{r PACF plots, echo = FALSE}
+par(mfrow = c(4, 3), mar = c(2, 2, 3, 2))
+for (j in 1:ncol(df)) {
+  pacf(df[,j], main=colnames(df)[j])
+}
+```
+# References {.unnumbered}
