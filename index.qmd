@@ -20,15 +20,17 @@ This project aims to forecast real wages in Australia to provide an outlook for 
 
 The rising inflation and consequent escalation in the cost of living have imposed significant strain on Australian households (@RBA2024). Moreover, nominal wage growth rates in Australia have failed to sustain their previous levels of approximately 4% since 2013 (@ABS2024WPI). This decline in nominal wage growth has translated into a reduction in real wages for Australian households, particularly in the recent post-COVID era (@TreasuryAustralia2024). Notably, there has been a discernible upsurge in real wages since the last quarter. This project seeks to investigate whether households can anticipate further increases in real wages in the future and whether these increases are stable.
 
-## Model setup
+## Thoery base
 
-We will define real wages as:
+**Real wages** defined as:
 
 ```{=tex}
 \begin{align}
-Real\: Wages\: =\: Nominal\: Wages\: -\: Inflation
+Real\:wages = \frac{Nominal\:wages}{CPI(as\:Index)} = \frac{Nominal\:wages}{1\:+CPI(as\:Rate)} =\frac{Nominal\:wages}{1\: + Inflation}
 \end{align}
 ```
+
+
 # Data
 
 Labor data is retrieved from the Australian Bureau of Statistics (ABS) using the readabs function. Financial data is obtained from the Reserve Bank of Australia (RBA) using the readrba function.
