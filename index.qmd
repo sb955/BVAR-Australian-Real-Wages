@@ -1,5 +1,5 @@
 ---
-title: "Forecasting Australian Real Wages"
+title: "Forecasting Australian Real Wages Growth Rates"
 author: "Stephan Berke"
 
 execute:
@@ -8,9 +8,9 @@ execute:
 bibliography: references.bib
 ---
 
-> **Abstract.** This project employs a Bayesian Vector Autoregression (BVAR) model to forecast Australian real wages for future periods. Beginning in 2021, Australian households experienced negative growth rates in real wages, but recent trends indicate a rebound. Therefore, a positive trajectory in real wages is anticipated for the upcoming periods.
+> **Abstract.** This project employs a Bayesian Vector Autoregression (BVAR) model to forecast Australian real wages growth rates for future periods. Beginning in 2021, Australian households experienced negative growth rates in real wages, but recent trends indicate a rebound. Therefore, a positive trajectory in real wages growth rate is anticipated for the upcoming periods.
 >
-> **Keywords.** BVARs, Real Wages, Inflation, Households
+> **Keywords.** BVARs, Real Wages Growth Rates, Inflation, Households
 
 # Research Question
 
@@ -30,6 +30,25 @@ Real\:wages = \frac{Nominal\:wages}{CPI(as\:Index)} = \frac{Nominal\:wages}{1\:+
 \end{align}
 ```
 
+**Real Wages Rates** defined as:
+```{=tex}
+\begin{align}
+Real\:wages = Nominal\:wages\:-\: Inflation}
+\end{align}
+```
+
+## Model base
+
+**BVARs Model** in this research:
+```{=tex}
+\begin{aligned}
+y_t &= \mu_0 + A_1y_{t-1} + A_2y_{t-2}...+A_py_{t-p} +\epsilon_t\\
+
+\epsilon_t|Y_{t-1} &\sim iid \mathcal{N}_{17}(0_{17}, \Sigma)
+\end{aligned}
+```
+
+### Explain of model assumptions and labels
 
 # Data
 
@@ -117,7 +136,7 @@ unempl.qt <- to.quarterly(unempl.yl_xts, OHLC = FALSE)
 unempl.qt_filtered <- window(unempl.qt, start = as.yearqtr("1998 Q4"), end = as.yearqtr("2023 Q4"))
 unempl <- coredata(unempl.qt_filtered)
 
-#labor productivity
+#labor participation
 participation.data <- read_abs(series_id = "A84423093A")
 parti.yl_xts <- xts(participation.data$value, order.by = as.Date(participation.data$date))
 parti.qt <- to.quarterly(parti.yl_xts, OHLC = FALSE)
