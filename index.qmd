@@ -204,9 +204,8 @@ for (j in 1:ncol(df)) {
 
 ### Augmented Dickey-Fuller test
 
-```{r ADF_table, echo = FALSE, message=FALSE, warning=FALSE}
-#| code-fold: true
-#| code-summary: "Code: ADF Tests"
+```{r ADF_table,  message=FALSE, warning=FALSE}
+
 
 perform_adf_tests <- function(df) {
   # Create an empty dataframe to store the results
