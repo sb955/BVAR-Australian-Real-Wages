@@ -18,50 +18,30 @@ This project aims to forecast real wages in Australia to provide an outlook for 
 
 # Motivation
 
-The rising inflation and consequent escalation in the cost of living have imposed significant strain on Australian households (@RBA2024). Moreover, nominal wage growth rates in Australia have failed to sustain their previous levels of approximately 4% since 2013 (@ABS2024WPI). This decline in nominal wage growth has translated into a reduction in real wages for Australian households, particularly in the recent post-COVID era (@TreasuryAustralia2024). Notably, there has been a discernible upsurge in real wages since the last quarter. This project seeks to investigate whether households can anticipate further increases in real wages in the future and whether these increases are stable.
+Accurate forecasting of real wage growth rates is imperative for policymakers and businesses as it facilitates the anticipation of shifts in consumer purchasing power, which in turn substantially influences economic demand and inflationary dynamics.Such forecasts are integral to the formulation of monetary and fiscal policies aimed at maintaining economic stability and fostering long-term growth. The rising inflation and consequent escalation in the cost of living have imposed significant strain on Australian households (@RBA2024), compounded by the inability of nominal wage growth to sustain its historical average of approximately 4% since 2013 (@ABS2024WPI). This stagnation has resulted in a marked decline in real wages, particularly in the aftermath of the COVID-19 pandemic (@TreasuryAustralia2024). Notably, there has been a discernible upsurge in real wages since the last quarter. Nevertheless, historical projections by the Reserve Bank of Australia (RBA) have frequently failed to align with actual developments (@RBA2017), highlighting the necessity for a more refined predictive algorithm that can reliably anticipate future stable increases in real wages.
 
-## Thoery base
-
-**Real wages** defined as:
-
-```{=tex}
-\begin{align}
-Real\:wages = \frac{Nominal\:wages}{CPI(as\:Index)} = \frac{Nominal\:wages}{1\:+CPI(as\:Rate)} =\frac{Nominal\:wages}{1\: + Inflation}
-\end{align}
-```
+## Theory base
 
 **Real Wages Rates** defined as:
+
 ```{=tex}
-\begin{align}
-Real\:wages = Nominal\:wages\:-\: Inflation}
-\end{align}
+\begin{gather}
+\% \Delta Real\:wages = \% \Delta Nominal\:wages\:- Inflation
+\end{gather}
 ```
-
-## Model base
-
-**BVARs Model** in this research:
-```{=tex}
-\begin{aligned}
-y_t &= \mu_0 + A_1y_{t-1} + A_2y_{t-2}...+A_py_{t-p} +\epsilon_t\\
-
-\epsilon_t|Y_{t-1} &\sim iid \mathcal{N}_{17}(0_{17}, \Sigma)
-\end{aligned}
-```
-
-### Explain of model assumptions and labels
-
 # Data
 
-Labor data is retrieved from the Australian Bureau of Statistics (ABS) using the readabs function. Financial data is obtained from the Reserve Bank of Australia (RBA) using the readrba function.
+Labor data is retrieved from the Australian Bureau of Statistics (ABS) using the readabs function and the Reserve Bank of Australia (RBA) using readrba.
 
-The ABS releases data on average weekly earnings biannually, in May and November. As the latest data is from 5 months ago, we will utilize the Wage Price Index (WPI), which is measured quarterly (last released in December 2023).
+The ABS releases data on average weekly earnings biannually, in May and December As the latest data is from 4 months ago, we will utilize the Wage Price Index (WPI), which is measured quarterly (last released in December 2023).
+
+Key economic variables are incorporated to understand labor market and economic dynamics. Nominal and Real Wages assess purchasing power and income trends, with real wages adjusted using the Consumer Price Index (CPI) to account for inflation. Producer Prices, reflected by the Producer Price Index (PPI), provide insights into production costs and business environment.Export (EPI) and Import Indexes (IPI) are included to evaluate trade impacts and economic competitiveness. The Cost of Living Index (CLI) assesses consumer expenses, influencing economic welfare. Unemployment and Labor Participation Rates offer perspectives on labor market health and engagement. Log Hours Worked and Log Real GDP are used to analyze productivity trends and overall economic output.
 
 ## Indicators
 
 #### Australian Labor and Financial Data
 
-Following indicators will be used in the model. 
-Indicators on global economic factors will be included later in this project.
+Following indicators will be used in the model. Indicators on global economic factors will be included later in this project.
 
 | Indicator           | Index     | Source  | Unit        | Period    |
 |---------------------|-----------|---------|-------------|-----------|
@@ -72,12 +52,12 @@ Indicators on global economic factors will be included later in this project.
 | Export Index        | EPI       | ABS     | \%          | 1998-2023 |
 | Import Index        | IPI       | ABS     | \%          | 1998-2023 |
 | Cost of Living      | CLI       | ABS     | \%          | 1998-2023 |
-| Unemployment        | UR        | RBA     | Individuals | 1978-2024 |
+| Unemployment        | UR        | RBA     | \%          | 1978-2024 |
 | Labor Participation | LPR       | ABS     | \%          | 1978-2024 |
+| Log Hours Worked    | HW        | RBA     | \-          | 1978-2024 |
 | Log Real GDP        | Real GDP  | RBA     | Million AUD | 1959-2023 |
 
 ## Data extraction and transformation
-
 
 Since our main indicators are based on quarterly data, all indicators are converted into quarterly time series.
 
@@ -97,7 +77,6 @@ library(kableExtra)
 library(forecast)
 library(tseries)
 ```
-
 
 ```{r data extraction, message=FALSE, warning=FALSE}
 
@@ -130,7 +109,7 @@ impi <- subset(read_abs(series_id = "A2295766K"), date >= as.Date(start.period))
 cli <- subset(read_abs(series_id = "A4083524T"), date >= as.Date(start.period))$value
 
 #unemployment data
-unemployment.data <- read_rba_seriesid("GLFSURSA")
+unemployment.data <- read_abs(series_id = "A84423092X")
 unempl.yl_xts <- xts(unemployment.data$value, order.by = as.Date(unemployment.data$date))
 unempl.qt <- to.quarterly(unempl.yl_xts, OHLC = FALSE)
 unempl.qt_filtered <- window(unempl.qt, start = as.yearqtr("1998 Q4"), end = as.yearqtr("2023 Q4"))
@@ -156,25 +135,6 @@ log.h.worked <- log(h.worked)
 log.real.gdp <- log(subset(read_rba_seriesid("GGDPCVGDP"), date >= as.Date(start.period))$value)
 
 ```
-
-```{r labels, echo=FALSE}
-
-attr(nom.wpi, "label") <- "Nominal WPI"
-attr(cpi, "label") <- "CPI"
-attr(dates, "label") <- "Dates"
-attr(real.wpi, "label") <- "Real WPI"
-attr(ppi, "label") <- "PPI"
-attr(expi, "label") <- "EXPI"
-attr(impi, "label") <- "IMPI"
-attr(cli, "label") <- "CLI"
-attr(unempl, "label") <- "Unemployment"
-attr(parti, "label") <- "Participation"
-attr(log.h.worked, "label") <- "Log Hours Worked"
-attr(log.real.gdp, "label") <- "Log Real GDP"
-
-```
-
-**Might better describe the reasons of other variables used in the BVARs model**
 
 ## Descriptive Analysis
 
@@ -205,12 +165,9 @@ df_display <- data.frame(
 kable(head(df_display, 5))
 ```
 
-**Any discrption of data should be better** maybe consider a correlation table?
-
 ### Data Plots
 
-The following plots visualize the recent development of the variables of interest. The WPI started to climb recently, with the CPI decreasing at the same time. The real WPI finally begins to recover from negative growth rates in the past post-COVID era. 
-Of particular note are the stronger growth rates observed for the cost of living and the producer price index.
+The accompanying graphs depict the recent trends in the selected economic indicators. Notably, the Wage Price Index (WPI) has shown an upward trajectory recently, while the Consumer Price Index (CPI) has concurrently exhibited a decline. This divergence has facilitated a recovery in the real WPI from previously negative growth rates experienced in the post-COVID period. Additionally, significant increases have been observed in the growth rates of the Cost of Living Index and the Producer Price Index, highlighting notable shifts in economic conditions.
 
 ```{r PLOTS, echo=FALSE}
 # Plot data
@@ -224,9 +181,8 @@ for (j in 1:ncol(df)) {
        ylim = c(min(df[, j], na.rm = TRUE), max(df[, j], na.rm = TRUE)))
 }
 ```
-## Preliminary data analysis
 
-**Reasons that use ACF and PACF test. Further ADF test of unit root might be better**
+## Preliminary data analysis
 
 ### ACF Analysis
 
@@ -246,8 +202,75 @@ for (j in 1:ncol(df)) {
 }
 ```
 
+### Augmented Dickey-Fuller test
 
+```{r ADF_table, echo = FALSE, message=FALSE, warning=FALSE}
+#| code-fold: true
+#| code-summary: "Code: ADF Tests"
+
+perform_adf_tests <- function(df) {
+  # Create an empty dataframe to store the results
+  results <- data.frame(Variable = character(), TestType = character(), 
+                        TestStatistic = numeric(), PValue = numeric(), 
+                        stringsAsFactors = FALSE)
+
+  # Iterate over each column in the dataframe
+  for (col in colnames(df)) {
+    # Remove NA values from the column
+    column_data <- na.omit(df[[col]])
+
+    # Perform ADF test for levels
+    adf_levels <- tseries::adf.test(column_data, k = 4)
+
+    # Check if p-value is less than or equal to 0.05
+    if (adf_levels$p.value <= 0.05) {
+      results <- bind_rows(results,
+        data.frame(Variable = col, TestType = "Levels", 
+                   TestStatistic = adf_levels$statistic,
+                   PValue = adf_levels$p.value)
+      )
+    } else {
+      # Perform ADF test for first difference
+      adf_diff1 <- tseries::adf.test(diff(column_data), k = 4)
+      
+      # Check if p-value is less than 0.05
+      if (adf_diff1$p.value < 0.05) {
+        results <- bind_rows(results,
+          data.frame(Variable = col, TestType = "First Difference", 
+                     TestStatistic = adf_diff1$statistic,
+                     PValue = adf_diff1$p.value)
+        )
+      } else {
+        # Perform ADF test for second difference
+        adf_diff2 <- tseries::adf.test(diff(column_data, differences = 2), k = 4)
+        
+        results <- bind_rows(results,
+          data.frame(Variable = col, TestType = "Second Difference", 
+                     TestStatistic = adf_diff2$statistic,
+                     PValue = adf_diff2$p.value)
+        )
+      }
+    }
+  }
+
+  # Return the results dataframe
+  return(results)
+}
+
+adf_test_results <- perform_adf_tests(df)
+rmarkdown::paged_table(adf_test_results, options = list(pageLength = 11))
+```
+
+# The model
+
+To analyze the macroeconomic and financial variables and run forecasts, a vector autoregression (VAR) model can be applied, which allows for the multivariate framework of several timeseries. A general VAR model with $\rho$ lags for $t=1,...,T$ can be stated as:
+
+```{=tex}
+\begin{gather}
+y_{t}   =\mu_{0}+A_{1}y_{t-1}+...+A_{\rho}y_{t-\rho}+\epsilon_{t}
+\epsilon_{t}|Y_{T-1}    \sim iid\left(0_{N},\Sigma\right)
+\end{gather}
+```
+Where $y_{t}=N\times1$ is a vector of observations at time $t$, $\mu_{0}=N\times1$ is a vector of constant terms, $A_{i}=N\times N$ is a vector of the autoregressive slope parameters, $\epsilon_{t}=N\times1$ is a vector of error terms, $Y_{t-1}$ is the information set and $\Sigma=N\times N$ is the covariance matrix of the error term.
 
 # References {.unnumbered}
-
-
