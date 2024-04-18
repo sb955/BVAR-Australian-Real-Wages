@@ -31,7 +31,7 @@ Accurate forecasting of real wage growth rates is imperative for policymakers an
 ```
 # Data
 
-Labor data is retrieved from the Australian Bureau of Statistics (ABS) using the readabs function and the Reserve Bank of Australia (RBA) using readrba.
+Labor data is retrieved from the Australian Bureau of Statistics (ABS) using the **readabs** function and the Reserve Bank of Australia (RBA) using **readrba**.
 
 The ABS releases data on average weekly earnings biannually, in May and December As the latest data is from 4 months ago, we will utilize the Wage Price Index (WPI), which is measured quarterly (last released in December 2023).
 
