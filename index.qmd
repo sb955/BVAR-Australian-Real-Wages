@@ -266,8 +266,8 @@ To analyze the macroeconomic and financial variables and run forecasts, a vector
 
 ```{=tex}
 \begin{gather}
-y_{t}   =\mu_{0}+A_{1}y_{t-1}+...+A_{\rho}y_{t-\rho}+\epsilon_{t}
-\epsilon_{t}|Y_{T-1}    \sim iid\left(0_{N},\Sigma\right)
+y_{t}   &=\mu_{0}+A_{1}y_{t-1}+...+A_{\rho}y_{t-\rho}+\epsilon_{t}\\
+\epsilon_{t}|Y_{T-1}    &\sim iid\left(0_{N},\Sigma\right)
 \end{gather}
 ```
 Where $y_{t}=N\times1$ is a vector of observations at time $t$, $\mu_{0}=N\times1$ is a vector of constant terms, $A_{i}=N\times N$ is a vector of the autoregressive slope parameters, $\epsilon_{t}=N\times1$ is a vector of error terms, $Y_{t-1}$ is the information set and $\Sigma=N\times N$ is the covariance matrix of the error term.
