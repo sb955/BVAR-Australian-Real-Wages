@@ -22,11 +22,11 @@ Accurate forecasting of real wage growth rates is imperative for policymakers an
 
 ## Theory base
 
-**Real Wages Rates** defined as:
+**Real Wages** defined as:
 
 ```{=tex}
 \begin{gather}
-\% \Delta Real\:wages = \% \Delta Nominal\:wages\:- Inflation
+\log Real\:wages = \log Nominal\:wages\:- \log CPI 
 \end{gather}
 ```
 # Data
