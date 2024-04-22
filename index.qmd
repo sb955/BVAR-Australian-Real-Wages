@@ -14,7 +14,7 @@ bibliography: references.bib
 
 # Research Question
 
-This project aims to forecast real wages in Australia to provide an outlook for Australian households on the development in the upcoming periods.
+How will real wages and the broader economic conditions for households in Australia evolve in the upcoming periods?
 
 # Motivation
 
