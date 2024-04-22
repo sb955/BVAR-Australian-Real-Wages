@@ -1,5 +1,5 @@
 ---
-title: "Forecasting Australian Real Wages Growth Rates"
+title: "Forecasting Australian Real Wages"
 author: "Stephan Berke"
 
 execute:
@@ -8,9 +8,9 @@ execute:
 bibliography: references.bib
 ---
 
-> **Abstract.** This project employs a Bayesian Vector Autoregression (BVAR) model to forecast Australian real wages growth rates for future periods. Beginning in 2021, Australian households experienced negative growth rates in real wages, but recent trends indicate a rebound. Therefore, a positive trajectory in real wages growth rate is anticipated for the upcoming periods.
+> **Abstract.** This project employs a Bayesian Vector Autoregression (BVAR) model to forecast Australian real wages for future periods. Beginning in 2021, Australian households experienced negative growth rates in real wages, but recent trends indicate a rebound. Therefore, a positive trajectory in real wages is anticipated for the upcoming periods.
 >
-> **Keywords.** BVARs, Real Wages Growth Rates, Inflation, Households
+> **Keywords.** BVARs, Real Wages, Inflation, Households
 
 # Research Question
 
@@ -18,7 +18,7 @@ How will real wages and the broader economic conditions for households in Austra
 
 # Motivation
 
-Accurate forecasting of real wage growth rates is imperative for policymakers and businesses as it facilitates the anticipation of shifts in consumer purchasing power, which in turn substantially influences economic demand and inflationary dynamics.Such forecasts are integral to the formulation of monetary and fiscal policies aimed at maintaining economic stability and fostering long-term growth. The rising inflation and consequent escalation in the cost of living have imposed significant strain on Australian households (@RBA2024), compounded by the inability of nominal wage growth to sustain its historical average of approximately 4% since 2013 (@ABS2024WPI). This stagnation has resulted in a marked decline in real wages, particularly in the aftermath of the COVID-19 pandemic (@TreasuryAustralia2024). Notably, there has been a discernible upsurge in real wages since the last quarter. Nevertheless, historical projections by the Reserve Bank of Australia (RBA) have frequently failed to align with actual developments (@RBA2017), highlighting the necessity for a more refined predictive algorithm that can reliably anticipate future stable increases in real wages.
+Accurate forecasting of real wages is imperative for policymakers and businesses as it facilitates the anticipation of shifts in consumer purchasing power, which in turn substantially influences economic demand and inflationary dynamics. Such forecasts are integral to the formulation of monetary and fiscal policies aimed at maintaining economic stability and fostering long-term growth. The rising inflation and consequent escalation in the cost of living have imposed significant strain on Australian households (@RBA2024), compounded by the inability of nominal wage growth to sustain its historical average of approximately 4% since 2013 (@ABS2024WPI). This stagnation has resulted in a marked decline in real wages, particularly in the aftermath of the COVID-19 pandemic (@TreasuryAustralia2024). Notably, there has been a discernible upsurge in real wages since the last quarter. Nevertheless, historical projections by the Reserve Bank of Australia (RBA) have frequently failed to align with actual developments (@RBA2017), highlighting the necessity for a more refined predictive algorithm that can reliably anticipate future stable increases in real wages.
 
 ## Theory base
 
