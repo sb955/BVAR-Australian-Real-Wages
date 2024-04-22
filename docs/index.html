@@ -173,22 +173,22 @@ div.csl-indent {
 </blockquote>
 <section id="research-question" class="level1">
 <h1>Research Question</h1>
-<p>This project aims to forecast real wages in Australia to provide an outlook for Australian households on the development in the upcoming periods.</p>
+<p>How will real wages and the broader economic conditions for households in Australia evolve in the upcoming periods?</p>
 </section>
 <section id="motivation" class="level1">
 <h1>Motivation</h1>
 <p>Accurate forecasting of real wage growth rates is imperative for policymakers and businesses as it facilitates the anticipation of shifts in consumer purchasing power, which in turn substantially influences economic demand and inflationary dynamics.Such forecasts are integral to the formulation of monetary and fiscal policies aimed at maintaining economic stability and fostering long-term growth. The rising inflation and consequent escalation in the cost of living have imposed significant strain on Australian households (<span class="citation" data-cites="RBA2024">Reserve Bank of Australia (<a href="#ref-RBA2024" role="doc-biblioref">2024</a>)</span>), compounded by the inability of nominal wage growth to sustain its historical average of approximately 4% since 2013 (<span class="citation" data-cites="ABS2024WPI">Australian Bureau of Statistics (<a href="#ref-ABS2024WPI" role="doc-biblioref">2024</a>)</span>). This stagnation has resulted in a marked decline in real wages, particularly in the aftermath of the COVID-19 pandemic (<span class="citation" data-cites="TreasuryAustralia2024">Australian Treasury (<a href="#ref-TreasuryAustralia2024" role="doc-biblioref">2024</a>)</span>). Notably, there has been a discernible upsurge in real wages since the last quarter. Nevertheless, historical projections by the Reserve Bank of Australia (RBA) have frequently failed to align with actual developments (<span class="citation" data-cites="RBA2017">Reserve Bank of Australia (<a href="#ref-RBA2017" role="doc-biblioref">2017</a>)</span>), highlighting the necessity for a more refined predictive algorithm that can reliably anticipate future stable increases in real wages.</p>
 <section id="theory-base" class="level2">
 <h2 class="anchored" data-anchor-id="theory-base">Theory base</h2>
-<p><strong>Real Wages Rates</strong> defined as:</p>
+<p><strong>Real Wages</strong> defined as:</p>
 <span class="math display">\[\begin{gather}
-\% \Delta Real\:wages = \% \Delta Nominal\:wages\:- Inflation
+\log Real\:wages = \log Nominal\:wages\:- \log CPI
 \end{gather}\]</span>
 </section>
 </section>
 <section id="data" class="level1">
 <h1>Data</h1>
-<p>Labor data is retrieved from the Australian Bureau of Statistics (ABS) using the readabs function and the Reserve Bank of Australia (RBA) using readrba.</p>
+<p>Labor data is retrieved from the Australian Bureau of Statistics (ABS) using the <strong>readabs</strong> function and the Reserve Bank of Australia (RBA) using <strong>readrba</strong>.</p>
 <p>The ABS releases data on average weekly earnings biannually, in May and December As the latest data is from 4 months ago, we will utilize the Wage Price Index (WPI), which is measured quarterly (last released in December 2023).</p>
 <p>Key economic variables are incorporated to understand labor market and economic dynamics. Nominal and Real Wages assess purchasing power and income trends, with real wages adjusted using the Consumer Price Index (CPI) to account for inflation. Producer Prices, reflected by the Producer Price Index (PPI), provide insights into production costs and business environment.Export (EPI) and Import Indexes (IPI) are included to evaluate trade impacts and economic competitiveness. The Cost of Living Index (CLI) assesses consumer expenses, influencing economic welfare. Unemployment and Labor Participation Rates offer perspectives on labor market health and engagement. Log Hours Worked and Log Real GDP are used to analyze productivity trends and overall economic output.</p>
 <section id="indicators" class="level2">
@@ -208,9 +208,9 @@ div.csl-indent {
 </thead>
 <tbody>
 <tr class="odd">
-<td>Nominal Wages</td>
-<td>WPI</td>
-<td>RBA</td>
+<td>Real Wages</td>
+<td>WPI - CPI</td>
+<td>ABS/RBA</td>
 <td>%</td>
 <td>1997-2024</td>
 </tr>
@@ -222,62 +222,55 @@ div.csl-indent {
 <td>1948-2023</td>
 </tr>
 <tr class="odd">
-<td>Real Wages</td>
-<td>WPI - CPI</td>
-<td>ABS/RBA</td>
-<td>%</td>
-<td>1997-2024</td>
-</tr>
-<tr class="even">
 <td>Producer Prices</td>
 <td>PPI</td>
 <td>ABS</td>
 <td>%</td>
 <td>1998-2023</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td>Export Index</td>
 <td>EPI</td>
 <td>ABS</td>
 <td>%</td>
 <td>1998-2023</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td>Import Index</td>
 <td>IPI</td>
 <td>ABS</td>
 <td>%</td>
 <td>1998-2023</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td>Cost of Living</td>
 <td>CLI</td>
 <td>ABS</td>
 <td>%</td>
 <td>1998-2023</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td>Unemployment</td>
 <td>UR</td>
 <td>RBA</td>
 <td>%</td>
 <td>1978-2024</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td>Labor Participation</td>
 <td>LPR</td>
 <td>ABS</td>
 <td>%</td>
 <td>1978-2024</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td>Log Hours Worked</td>
 <td>HW</td>
 <td>RBA</td>
 <td>-</td>
 <td>1978-2024</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td>Log Real GDP</td>
 <td>Real GDP</td>
 <td>RBA</td>
@@ -301,104 +294,97 @@ div.csl-indent {
 <div class="cell-output-display">
 <table class="table table-sm table-striped small">
 <colgroup>
-<col style="width: 9%">
-<col style="width: 10%">
-<col style="width: 3%">
-<col style="width: 7%">
-<col style="width: 4%">
-<col style="width: 4%">
-<col style="width: 4%">
-<col style="width: 4%">
+<col style="width: 8%">
 <col style="width: 11%">
-<col style="width: 12%">
-<col style="width: 15%">
+<col style="width: 8%">
+<col style="width: 8%">
+<col style="width: 8%">
+<col style="width: 8%">
+<col style="width: 8%">
+<col style="width: 8%">
+<col style="width: 7%">
+<col style="width: 9%">
 <col style="width: 11%">
 </colgroup>
 <thead>
 <tr class="header">
 <th style="text-align: left;">Date</th>
-<th style="text-align: right;">Nominal.WPI</th>
-<th style="text-align: right;">CPI</th>
-<th style="text-align: right;">Real.WPI</th>
-<th style="text-align: right;">PPI</th>
-<th style="text-align: right;">EXPI</th>
-<th style="text-align: right;">IMPI</th>
-<th style="text-align: right;">CLI</th>
-<th style="text-align: right;">Unemployment</th>
-<th style="text-align: right;">Participation</th>
-<th style="text-align: right;">Log.Hours.Worked</th>
-<th style="text-align: right;">Log.Real.GDP</th>
+<th style="text-align: right;">Log.of.Real.WPI</th>
+<th style="text-align: right;">Log.of.CPI</th>
+<th style="text-align: right;">Log.of.PPI</th>
+<th style="text-align: right;">Log.of.EXPI</th>
+<th style="text-align: right;">Log.of.IMPI</th>
+<th style="text-align: right;">Log.of.CLI</th>
+<th style="text-align: right;">log.unempl</th>
+<th style="text-align: right;">log.parti</th>
+<th style="text-align: right;">log.h.worked</th>
+<th style="text-align: right;">Log.of.Real.GDP</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">1998-12-31</td>
-<td style="text-align: right;">0.7</td>
-<td style="text-align: right;">0.4</td>
-<td style="text-align: right;">0.3</td>
-<td style="text-align: right;">-0.6</td>
-<td style="text-align: right;">-5.0</td>
-<td style="text-align: right;">-1.0</td>
-<td style="text-align: right;">65.9</td>
-<td style="text-align: right;">7.044860</td>
-<td style="text-align: right;">63.53082</td>
-<td style="text-align: right;">14.04631</td>
+<td style="text-align: right;">0.0233247</td>
+<td style="text-align: right;">4.216562</td>
+<td style="text-align: right;">4.261270</td>
+<td style="text-align: right;">3.899950</td>
+<td style="text-align: right;">4.624973</td>
+<td style="text-align: right;">4.188138</td>
+<td style="text-align: right;">1.954982</td>
+<td style="text-align: right;">4.143595</td>
+<td style="text-align: right;">15.14428</td>
 <td style="text-align: right;">12.63974</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">1999-03-31</td>
-<td style="text-align: right;">0.7</td>
-<td style="text-align: right;">0.0</td>
-<td style="text-align: right;">0.7</td>
-<td style="text-align: right;">-0.3</td>
-<td style="text-align: right;">-3.8</td>
-<td style="text-align: right;">-2.2</td>
-<td style="text-align: right;">65.7</td>
-<td style="text-align: right;">7.348020</td>
-<td style="text-align: right;">62.90669</td>
-<td style="text-align: right;">14.05472</td>
+<td style="text-align: right;">0.0305035</td>
+<td style="text-align: right;">4.216562</td>
+<td style="text-align: right;">4.258446</td>
+<td style="text-align: right;">3.860730</td>
+<td style="text-align: right;">4.603168</td>
+<td style="text-align: right;">4.185099</td>
+<td style="text-align: right;">2.033353</td>
+<td style="text-align: right;">4.138257</td>
+<td style="text-align: right;">15.14749</td>
 <td style="text-align: right;">12.64707</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">1999-06-30</td>
-<td style="text-align: right;">0.9</td>
-<td style="text-align: right;">0.4</td>
-<td style="text-align: right;">0.5</td>
-<td style="text-align: right;">0.3</td>
-<td style="text-align: right;">-2.7</td>
-<td style="text-align: right;">-2.6</td>
-<td style="text-align: right;">65.9</td>
-<td style="text-align: right;">6.476035</td>
-<td style="text-align: right;">62.54834</td>
-<td style="text-align: right;">14.04771</td>
+<td style="text-align: right;">0.0332161</td>
+<td style="text-align: right;">4.220977</td>
+<td style="text-align: right;">4.261270</td>
+<td style="text-align: right;">3.832980</td>
+<td style="text-align: right;">4.576771</td>
+<td style="text-align: right;">4.188138</td>
+<td style="text-align: right;">1.922737</td>
+<td style="text-align: right;">4.136550</td>
+<td style="text-align: right;">15.15045</td>
 <td style="text-align: right;">12.65050</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">1999-09-30</td>
-<td style="text-align: right;">0.6</td>
-<td style="text-align: right;">0.9</td>
-<td style="text-align: right;">-0.3</td>
-<td style="text-align: right;">0.8</td>
-<td style="text-align: right;">1.1</td>
-<td style="text-align: right;">-0.1</td>
-<td style="text-align: right;">66.5</td>
-<td style="text-align: right;">7.080555</td>
-<td style="text-align: right;">63.49623</td>
-<td style="text-align: right;">14.06500</td>
+<td style="text-align: right;">0.0315212</td>
+<td style="text-align: right;">4.229749</td>
+<td style="text-align: right;">4.269697</td>
+<td style="text-align: right;">3.843744</td>
+<td style="text-align: right;">4.575741</td>
+<td style="text-align: right;">4.197202</td>
+<td style="text-align: right;">1.897081</td>
+<td style="text-align: right;">4.138318</td>
+<td style="text-align: right;">15.16141</td>
 <td style="text-align: right;">12.66185</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">1999-12-31</td>
-<td style="text-align: right;">0.7</td>
-<td style="text-align: right;">0.6</td>
-<td style="text-align: right;">0.1</td>
-<td style="text-align: right;">0.8</td>
-<td style="text-align: right;">4.3</td>
-<td style="text-align: right;">2.2</td>
-<td style="text-align: right;">66.7</td>
-<td style="text-align: right;">6.568227</td>
-<td style="text-align: right;">63.82390</td>
-<td style="text-align: right;">14.08113</td>
+<td style="text-align: right;">0.0327431</td>
+<td style="text-align: right;">4.235555</td>
+<td style="text-align: right;">4.278054</td>
+<td style="text-align: right;">3.885679</td>
+<td style="text-align: right;">4.597138</td>
+<td style="text-align: right;">4.200205</td>
+<td style="text-align: right;">1.848368</td>
+<td style="text-align: right;">4.144242</td>
+<td style="text-align: right;">15.17622</td>
 <td style="text-align: right;">12.67871</td>
 </tr>
 </tbody>
@@ -441,7 +427,7 @@ div.csl-indent {
 
 <div data-pagedtable="false">
   <script data-pagedtable-source="" type="application/json">
-{"columns":[{"label":[""],"name":["_rn_"],"type":[""],"align":["left"]},{"label":["Variable"],"name":[1],"type":["chr"],"align":["left"]},{"label":["TestType"],"name":[2],"type":["chr"],"align":["left"]},{"label":["TestStatistic"],"name":[3],"type":["dbl"],"align":["right"]},{"label":["PValue"],"name":[4],"type":["dbl"],"align":["right"]}],"data":[{"1":"Nominal.WPI","2":"First Difference","3":"-5.340508","4":"0.01000000","_rn_":"Dickey-Fuller...1"},{"1":"CPI","2":"First Difference","3":"-6.384076","4":"0.01000000","_rn_":"Dickey-Fuller...2"},{"1":"Real.WPI","2":"Levels","3":"-3.619395","4":"0.03487543","_rn_":"Dickey-Fuller...3"},{"1":"PPI","2":"Levels","3":"-4.050720","4":"0.01000000","_rn_":"Dickey-Fuller...4"},{"1":"EXPI","2":"Levels","3":"-5.072645","4":"0.01000000","_rn_":"Dickey-Fuller...5"},{"1":"IMPI","2":"Levels","3":"-5.103462","4":"0.01000000","_rn_":"Dickey-Fuller...6"},{"1":"CLI","2":"Second Difference","3":"-6.175287","4":"0.01000000","_rn_":"Dickey-Fuller...7"},{"1":"Unemployment","2":"First Difference","3":"-4.538935","4":"0.01000000","_rn_":"Dickey-Fuller...8"},{"1":"Participation","2":"First Difference","3":"-4.877507","4":"0.01000000","_rn_":"Dickey-Fuller...9"},{"1":"Log.Hours.Worked","2":"First Difference","3":"-4.661702","4":"0.01000000","_rn_":"Dickey-Fuller...10"},{"1":"Log.Real.GDP","2":"First Difference","3":"-4.640533","4":"0.01000000","_rn_":"Dickey-Fuller...11"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
+{"columns":[{"label":[""],"name":["_rn_"],"type":[""],"align":["left"]},{"label":["Variable"],"name":[1],"type":["chr"],"align":["left"]},{"label":["TestType"],"name":[2],"type":["chr"],"align":["left"]},{"label":["TestStatistic"],"name":[3],"type":["dbl"],"align":["right"]},{"label":["PValue"],"name":[4],"type":["dbl"],"align":["right"]}],"data":[{"1":"Log.of.Real.WPI","2":"First Difference","3":"-3.455484","4":"0.04960021","_rn_":"Dickey-Fuller...1"},{"1":"Log.of.CPI","2":"Second Difference","3":"-6.332683","4":"0.01000000","_rn_":"Dickey-Fuller...2"},{"1":"Log.of.PPI","2":"First Difference","3":"-3.728148","4":"0.02528997","_rn_":"Dickey-Fuller...3"},{"1":"Log.of.EXPI","2":"First Difference","3":"-5.017638","4":"0.01000000","_rn_":"Dickey-Fuller...4"},{"1":"Log.of.IMPI","2":"First Difference","3":"-5.093645","4":"0.01000000","_rn_":"Dickey-Fuller...5"},{"1":"Log.of.CLI","2":"Second Difference","3":"-6.375534","4":"0.01000000","_rn_":"Dickey-Fuller...6"},{"1":"log.unempl","2":"Levels","3":"-3.745394","4":"0.02425512","_rn_":"Dickey-Fuller...7"},{"1":"log.parti","2":"First Difference","3":"-5.500002","4":"0.01000000","_rn_":"Dickey-Fuller...8"},{"1":"log.h.worked","2":"First Difference","3":"-4.872804","4":"0.01000000","_rn_":"Dickey-Fuller...9"},{"1":"Log.of.Real.GDP","2":"First Difference","3":"-4.640533","4":"0.01000000","_rn_":"Dickey-Fuller...10"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
   </script>
 </div>
 </div>
@@ -453,8 +439,8 @@ div.csl-indent {
 <h1>The model</h1>
 <p>To analyze the macroeconomic and financial variables and run forecasts, a vector autoregression (VAR) model can be applied, which allows for the multivariate framework of several timeseries. A general VAR model with <span class="math inline">\(\rho\)</span> lags for <span class="math inline">\(t=1,...,T\)</span> can be stated as:</p>
 <span class="math display">\[\begin{gather}
-y_{t}   =\mu_{0}+A_{1}y_{t-1}+...+A_{\rho}y_{t-\rho}+\epsilon_{t}
-\epsilon_{t}|Y_{T-1}    \sim iid\left(0_{N},\Sigma\right)
+y_{t}   &amp;=\mu_{0}+A_{1}y_{t-1}+...+A_{\rho}y_{t-\rho}+\epsilon_{t}\\
+\epsilon_{t}|Y_{T-1}    &amp;\sim iid\left(0_{N},\Sigma\right)
 \end{gather}\]</span>
 <p>Where <span class="math inline">\(y_{t}=N\times1\)</span> is a vector of observations at time <span class="math inline">\(t\)</span>, <span class="math inline">\(\mu_{0}=N\times1\)</span> is a vector of constant terms, <span class="math inline">\(A_{i}=N\times N\)</span> is a vector of the autoregressive slope parameters, <span class="math inline">\(\epsilon_{t}=N\times1\)</span> is a vector of error terms, <span class="math inline">\(Y_{t-1}\)</span> is the information set and <span class="math inline">\(\Sigma=N\times N\)</span> is the covariance matrix of the error term.</p>
 </section>
