@@ -143,17 +143,16 @@ log.real.gdp <- log(subset(read_rba_seriesid("GGDPCVGDP"), date >= as.Date(start
 
 # Create data frame
 df <- data.frame(
-  "Nominal WPI" = nom.wpi,
-  "CPI" = cpi,
-  "Real WPI" = real.wpi,
-  "PPI" = ppi,
-  "EXPI" = expi,
-  "IMPI" = impi,
-  "CLI" = cli,
-  "Unemployment" = unempl,
-  "Participation" = parti,
+  "Log of Real WPI" = real.wpi,
+  "Log of CPI" = cpi,
+  "Log of PPI" = ppi,
+  "Log of EXPI" = expi,
+  "Log of IMPI" = impi,
+  "Log of CLI" = cli,
+  "Log of Unemployment" = unempl,
+  "Log of Participation" = parti,
   "Log Hours Worked" = log.h.worked,
-  "Log Real GDP" = log.real.gdp
+  "Log of Real GDP" = log.real.gdp
 )
 # Display the first 5 rows of the dataframe
 
