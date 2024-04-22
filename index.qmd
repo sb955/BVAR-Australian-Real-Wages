@@ -96,26 +96,26 @@ real.wpi <- nom.wpi - cpi
 dates <- subset(read_rba_seriesid("GWPIPRIQP"), date >= as.Date(start.period))$date
 
 # Get producer prices (PPI)
-ppi <- subset(read_abs(series_id = "A2314866J"), date >= as.Date(start.period))$value
+ppi <- log(subset(read_abs(series_id = "A2314865F"), date >= as.Date(start.period))$value)
 
 # Get export price index (EXPI)
-expi <- subset(read_abs(series_id = "A2294887L"), date >= as.Date(start.period))$value
+expi <- log(subset(read_abs(series_id = "A2294886K"), date >= as.Date(start.period))$value)
 
 # Get import price index (IMPI)
-impi <- subset(read_abs(series_id = "A2295766K"), date >= as.Date(start.period))$value
+impi <- log(subset(read_abs(series_id = "A2295765J"), date >= as.Date(start.period))$value)
 
 # Get cost of living index (CLI)
-cli <- subset(read_abs(series_id = "A4083524T"), date >= as.Date(start.period))$value
+cli <- log(subset(read_abs(series_id = "A4083524T"), date >= as.Date(start.period))$value)
 
 #unemployment data
-unemployment.data <- read_abs(series_id = "A84423092X")
+unemployment.data <- log(read_abs(series_id = "A84423092X"))
 unempl.yl_xts <- xts(unemployment.data$value, order.by = as.Date(unemployment.data$date))
 unempl.qt <- to.quarterly(unempl.yl_xts, OHLC = FALSE)
 unempl.qt_filtered <- window(unempl.qt, start = as.yearqtr("1998 Q4"), end = as.yearqtr("2023 Q4"))
 unempl <- coredata(unempl.qt_filtered)
 
 #labor participation
-participation.data <- read_abs(series_id = "A84423093A")
+participation.data <- log(read_abs(series_id = "A84423093A"))
 parti.yl_xts <- xts(participation.data$value, order.by = as.Date(participation.data$date))
 parti.qt <- to.quarterly(parti.yl_xts, OHLC = FALSE)
 parti.qt_filtered <- window(parti.qt, start = as.yearqtr("1998 Q4"), end = as.yearqtr("2023 Q4"))
