@@ -82,53 +82,64 @@ library(tseries)
 #define periods
 end.period <- "2023-12-31"
 start.period <- "1998-12-01"
+start.period.qt <- "1998 Q4"
+end.period.qt <- "2023 Q4"
+
 
 # Get wage growth
-nom.wpi <- log(subset(read_abs(series_id = "A2713851R"), date >= as.Date(start.period))$value)
+log.nom.wpi <- log(subset(read_abs(series_id = "A2713851R"), date >= as.Date(start.period))$value)
 
 # Get inflation rate (CPI)
-cpi <- log(subset(read_abs(series_id = "A2325850V"), date >= as.Date(start.period))$value)
+log.cpi <- log(ifelse(subset(read_abs(series_id = "A2325850V"), date >= as.Date(start.period))$value == 0, NA, subset(read_abs(series_id = "A2325850V"), date >= as.Date(start.period))$value))
 
 # Define real wage
-real.wpi <- nom.wpi - cpi
+log.real.wpi <- log.nom.wpi - log.cpi
 
 # Get dates
 dates <- subset(read_rba_seriesid("GWPIPRIQP"), date >= as.Date(start.period))$date
 
 # Get producer prices (PPI)
-ppi <- log(subset(read_abs(series_id = "A2314865F"), date >= as.Date(start.period))$value)
+log.ppi <- log(subset(read_abs(series_id = "A2314865F"), date >= as.Date(start.period))$value)
 
 # Get export price index (EXPI)
-expi <- log(subset(read_abs(series_id = "A2294886K"), date >= as.Date(start.period))$value)
+log.expi <- log(subset(read_abs(series_id = "A2294886K"), date >= as.Date(start.period))$value)
 
 # Get import price index (IMPI)
-impi <- log(subset(read_abs(series_id = "A2295765J"), date >= as.Date(start.period))$value)
+log.impi <- log(subset(read_abs(series_id = "A2295765J"), date >= as.Date(start.period))$value)
 
 # Get cost of living index (CLI)
-cli <- log(subset(read_abs(series_id = "A4083524T"), date >= as.Date(start.period))$value)
+log.cli <- log(subset(read_abs(series_id = "A4083524T"), date >= as.Date(start.period))$value)
 
-#unemployment data
-unemployment.data <- log(read_abs(series_id = "A84423092X"))
-unempl.yl_xts <- xts(unemployment.data$value, order.by = as.Date(unemployment.data$date))
-unempl.qt <- to.quarterly(unempl.yl_xts, OHLC = FALSE)
-unempl.qt_filtered <- window(unempl.qt, start = as.yearqtr("1998 Q4"), end = as.yearqtr("2023 Q4"))
-unempl <- coredata(unempl.qt_filtered)
+# Get Log of Unemployment rate
+log.unempl <- read_abs(series_id = "A84423092X") |> 
+  select(date, value) |> 
+  mutate(q_dates = as.yearqtr(date)) |> 
+  filter(q_dates >= start.period.qt & q_dates <= end.period.qt) |> 
+  group_by(q_dates) |> 
+  summarise(value = mean(value, na.rm = TRUE)) |> 
+  mutate(log_value = log(value)) |> 
+  select(log_value)
 
-#labor participation
-participation.data <- log(read_abs(series_id = "A84423093A"))
-parti.yl_xts <- xts(participation.data$value, order.by = as.Date(participation.data$date))
-parti.qt <- to.quarterly(parti.yl_xts, OHLC = FALSE)
-parti.qt_filtered <- window(parti.qt, start = as.yearqtr("1998 Q4"), end = as.yearqtr("2023 Q4"))
-parti <- coredata(parti.qt_filtered)
+#Log of labor participation
+log.parti <- read_abs(series_id = "A84423093A") |>
+  select(date, value) |>
+  mutate(q_dates = as.yearqtr(date),
+    log_value = log(value)) |>
+  filter(q_dates >= start.period.qt & q_dates <= end.period.qt) |>
+  group_by(q_dates) |>
+  summarise(mean_log_value = mean(log_value, na.rm = TRUE)) |>
+  select(mean_log_value)
 
 
 #hours worked
-h.worked.data <- read_rba_seriesid("GLFMHW")
-h.worked_xts <- xts(h.worked.data$value, order.by = as.Date(h.worked.data$date))
-h.worked.qt <- to.quarterly(h.worked_xts, OHLC = FALSE)
-h.worked.qt_filtered <- window(h.worked.qt, start = as.yearqtr("1998 Q4"), end = as.yearqtr("2023 Q4"))
-h.worked <- coredata(h.worked.qt_filtered)
-log.h.worked <- log(h.worked)
+log.h.worked <- read_rba_seriesid("GLFMHW") |>
+  select(date, value) |>
+  mutate(q_dates = as.yearqtr(date)) |>
+  filter(q_dates >= start.period.qt & q_dates <= end.period.qt) |>
+  group_by(q_dates) |>
+  summarise(quarterly_sum = sum(value, na.rm = TRUE)) |>
+  mutate(log_quarterly_sum = log(quarterly_sum)) |>
+  select(log_quarterly_sum)
 
 #real gdp
 log.real.gdp <- log(subset(read_rba_seriesid("GGDPCVGDP"), date >= as.Date(start.period))$value)
@@ -143,14 +154,14 @@ log.real.gdp <- log(subset(read_rba_seriesid("GGDPCVGDP"), date >= as.Date(start
 
 # Create data frame
 df <- data.frame(
-  "Log of Real WPI" = real.wpi,
-  "Log of CPI" = cpi,
-  "Log of PPI" = ppi,
-  "Log of EXPI" = expi,
-  "Log of IMPI" = impi,
-  "Log of CLI" = cli,
-  "Log of Unemployment" = unempl,
-  "Log of Participation" = parti,
+  "Log of Real WPI" = log.real.wpi,
+  "Log of CPI" = log.cpi,
+  "Log of PPI" = log.ppi,
+  "Log of EXPI" = log.expi,
+  "Log of IMPI" = log.impi,
+  "Log of CLI" = log.cli,
+  "Log of Unemployment" = log.unempl,
+  "Log of Participation" = log.parti,
   "Log Hours Worked" = log.h.worked,
   "Log of Real GDP" = log.real.gdp
 )
