@@ -45,9 +45,8 @@ Following indicators will be used in the model. Indicators on global economic fa
 
 | Indicator           | Index     | Source  | Unit        | Period    |
 |---------------------|-----------|---------|-------------|-----------|
-| Nominal Wages       | WPI       | RBA     | \%          | 1997-2024 |
-| Inflation           | CPI       | ABS     | \%          | 1948-2023 |
 | Real Wages          | WPI - CPI | ABS/RBA | \%          | 1997-2024 |
+| Inflation           | CPI       | ABS     | \%          | 1948-2023 |
 | Producer Prices     | PPI       | ABS     | \%          | 1998-2023 |
 | Export Index        | EPI       | ABS     | \%          | 1998-2023 |
 | Import Index        | IPI       | ABS     | \%          | 1998-2023 |
@@ -85,16 +84,16 @@ end.period <- "2023-12-31"
 start.period <- "1998-12-01"
 
 # Get wage growth
-nom.wpi <- subset(read_rba_seriesid("GWPIPRIQP"), date >= as.Date(start.period))$value
+nom.wpi <- log(subset(read_abs(series_id = "A2713851R"), date >= as.Date(start.period))$value)
 
 # Get inflation rate (CPI)
-cpi <- subset(read_abs(series_id = "A2325850V"), date >= as.Date(start.period))$value
-
-# Get dates
-dates <- subset(read_rba_seriesid("GWPIPRIQP"), date >= as.Date(start.period))$date
+cpi <- log(subset(read_abs(series_id = "A2325850V"), date >= as.Date(start.period))$value)
 
 # Define real wage
 real.wpi <- nom.wpi - cpi
+
+# Get dates
+dates <- subset(read_rba_seriesid("GWPIPRIQP"), date >= as.Date(start.period))$date
 
 # Get producer prices (PPI)
 ppi <- subset(read_abs(series_id = "A2314866J"), date >= as.Date(start.period))$value
