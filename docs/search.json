@@ -2,42 +2,42 @@
   {
     "objectID": "index.html",
     "href": "index.html",
-    "title": "Forecasting Australian Real Wages Growth Rates",
+    "title": "Forecasting Australian Real Wages",
     "section": "",
-    "text": "Abstract. This project employs a Bayesian Vector Autoregression (BVAR) model to forecast Australian real wages growth rates for future periods. Beginning in 2021, Australian households experienced negative growth rates in real wages, but recent trends indicate a rebound. Therefore, a positive trajectory in real wages growth rate is anticipated for the upcoming periods.\nKeywords. BVARs, Real Wages Growth Rates, Inflation, Households"
+    "text": "Abstract. This project employs a Bayesian Vector Autoregression (BVAR) model to forecast Australian real wages for future periods. Beginning in 2021, Australian households experienced negative growth rates in real wages, but recent trends indicate a rebound. Therefore, a positive trajectory in real wages is anticipated for the upcoming periods.\nKeywords. BVARs, Real Wages, Inflation, Households"
   },
   {
     "objectID": "index.html#theory-base",
     "href": "index.html#theory-base",
-    "title": "Forecasting Australian Real Wages Growth Rates",
+    "title": "Forecasting Australian Real Wages",
     "section": "Theory base",
     "text": "Theory base\nReal Wages defined as:\n\\[\\begin{gather}\n\\log Real\\:wages = \\log Nominal\\:wages\\:- \\log CPI\n\\end{gather}\\]"
   },
   {
     "objectID": "index.html#indicators",
     "href": "index.html#indicators",
-    "title": "Forecasting Australian Real Wages Growth Rates",
+    "title": "Forecasting Australian Real Wages",
     "section": "Indicators",
     "text": "Indicators\n\nAustralian Labor and Financial Data\nFollowing indicators will be used in the model. Indicators on global economic factors will be included later in this project.\n\n\n\nIndicator\nIndex\nSource\nUnit\nPeriod\n\n\n\n\nReal Wages\nWPI - CPI\nABS/RBA\n%\n1997-2024\n\n\nInflation\nCPI\nABS\n%\n1948-2023\n\n\nProducer Prices\nPPI\nABS\n%\n1998-2023\n\n\nExport Index\nEPI\nABS\n%\n1998-2023\n\n\nImport Index\nIPI\nABS\n%\n1998-2023\n\n\nCost of Living\nCLI\nABS\n%\n1998-2023\n\n\nUnemployment\nUR\nRBA\n%\n1978-2024\n\n\nLabor Participation\nLPR\nABS\n%\n1978-2024\n\n\nLog Hours Worked\nHW\nRBA\n-\n1978-2024\n\n\nLog Real GDP\nReal GDP\nRBA\nMillion AUD\n1959-2023"
   },
   {
     "objectID": "index.html#data-extraction-and-transformation",
     "href": "index.html#data-extraction-and-transformation",
-    "title": "Forecasting Australian Real Wages Growth Rates",
+    "title": "Forecasting Australian Real Wages",
     "section": "Data extraction and transformation",
     "text": "Data extraction and transformation\nSince our main indicators are based on quarterly data, all indicators are converted into quarterly time series.\nGiven that the extracted time series data for the production price index starts in 1998 Q4, we will use this as the starting date for our analysis."
   },
   {
     "objectID": "index.html#descriptive-analysis",
     "href": "index.html#descriptive-analysis",
-    "title": "Forecasting Australian Real Wages Growth Rates",
+    "title": "Forecasting Australian Real Wages",
     "section": "Descriptive Analysis",
     "text": "Descriptive Analysis\n\nData Overview\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nDate\nLog.of.Real.WPI\nLog.of.CPI\nLog.of.PPI\nLog.of.EXPI\nLog.of.IMPI\nLog.of.CLI\nlog.unempl\nlog.parti\nlog.h.worked\nLog.of.Real.GDP\n\n\n\n\n1998-12-31\n0.0233247\n4.216562\n4.261270\n3.899950\n4.624973\n4.188138\n1.954982\n4.143595\n15.14428\n12.63974\n\n\n1999-03-31\n0.0305035\n4.216562\n4.258446\n3.860730\n4.603168\n4.185099\n2.033353\n4.138257\n15.14749\n12.64707\n\n\n1999-06-30\n0.0332161\n4.220977\n4.261270\n3.832980\n4.576771\n4.188138\n1.922737\n4.136550\n15.15045\n12.65050\n\n\n1999-09-30\n0.0315212\n4.229749\n4.269697\n3.843744\n4.575741\n4.197202\n1.897081\n4.138318\n15.16141\n12.66185\n\n\n1999-12-31\n0.0327431\n4.235555\n4.278054\n3.885679\n4.597138\n4.200205\n1.848368\n4.144242\n15.17622\n12.67871\n\n\n\n\n\n\n\nData Plots\nThe accompanying graphs depict the recent trends in the selected economic indicators. Notably, the Wage Price Index (WPI) has shown an upward trajectory recently, while the Consumer Price Index (CPI) has concurrently exhibited a decline. This divergence has facilitated a recovery in the real WPI from previously negative growth rates experienced in the post-COVID period. Additionally, significant increases have been observed in the growth rates of the Cost of Living Index and the Producer Price Index, highlighting notable shifts in economic conditions."
   },
   {
     "objectID": "index.html#preliminary-data-analysis",
     "href": "index.html#preliminary-data-analysis",
-    "title": "Forecasting Australian Real Wages Growth Rates",
+    "title": "Forecasting Australian Real Wages",
     "section": "Preliminary data analysis",
     "text": "Preliminary data analysis\n\nACF Analysis\n\n\n\n\n\n\n\nPACF Analysis\n\n\n\n\n\n\n\nAugmented Dickey-Fuller test"
   }
