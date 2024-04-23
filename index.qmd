@@ -58,9 +58,9 @@ Following indicators will be used in the model. Indicators on global economic fa
 
 ## Data extraction and transformation
 
-Since our main indicators are based on quarterly data, all indicators are converted into quarterly time series.
+Since the main indicators are based on quarterly data, all indicators are converted into quarterly time series.
 
-Given that the extracted time series data for the production price index starts in 1998 Q4, we will use this as the starting date for our analysis.
+Given that the extracted time series data for the production price index starts in 1998 Q4, this quarter will work as the starting date of the analysis.
 
 ```{r libraries, echo=FALSE, message=FALSE, warning=FALSE}
 library(quantmod)
@@ -179,7 +179,9 @@ kable(head(df_display, 5))
 
 ### Data Plots
 
-The accompanying graphs depict the recent trends in the selected economic indicators. Notably, the Wage Price Index (WPI) has shown an upward trajectory recently, while the Consumer Price Index (CPI) has concurrently exhibited a decline. This divergence has facilitated a recovery in the real WPI from previously negative growth rates experienced in the post-COVID period. Additionally, significant increases have been observed in the growth rates of the Cost of Living Index and the Producer Price Index, highlighting notable shifts in economic conditions.
+The accompanying graphs depict the recent trends in the selected economic indicators. Notably, the Real Wage Price Index has dropped significantly since the beginning of COVID in March 2020. Concurrently, the Consumer Price Index has exhibited larger growth rates in the same period. Recently, a slight upward trend in Real Wages can be observed, though they remain below pre-pandemic levels.
+
+Other indicators like Cost of Living Index, the Import Index and the Producer Price Index also reveal increasing trends, highlighting notable shifts in economic conditions, with Export Prices also shifting upwards. However, labor market conditions appear resilient, with falling unemployment, stable participation rates, and increased working hours. Real GDP's upward trend suggests a recovery to pre-pandemic economic activity levels.
 
 ```{r PLOTS, echo=FALSE}
 # Plot data
