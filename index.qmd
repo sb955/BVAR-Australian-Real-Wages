@@ -200,6 +200,8 @@ for (j in 1:ncol(df)) {
 
 ### ACF Analysis
 
+The Autocorrelation Function (ACF) plots demonstrate a decay in correlation coefficients for all time series, with the memories of Import Index and Unemployment dropping slightly faster than the rest, indicating the presence of substantial memory. The initial lags exhibit significant autocorrelation, signifying non-stationary behavior. This persistence in the time series necessitates statistical differencing to ensure stationarity.
+
 ```{r ACF plots, echo = FALSE}
 par(mfrow = c(4, 3), mar = c(2, 2, 3, 2))
 for (j in 1:ncol(df)) {
@@ -209,6 +211,8 @@ for (j in 1:ncol(df)) {
 
 ### PACF Analysis
 
+The Partial Autocorrelation (PACF) plots for the time series predominantly exhibit significant partial autocorrelations at the first lag for all variables, followed by a rapid convergence to the confidence bounds. 
+This pattern suggests that the data could be wel represented by a first order autoregrssive model. 
 ```{r PACF plots, echo = FALSE}
 par(mfrow = c(4, 3), mar = c(2, 2, 3, 2))
 for (j in 1:ncol(df)) {
@@ -218,9 +222,10 @@ for (j in 1:ncol(df)) {
 
 ### Augmented Dickey-Fuller test
 
+The ADF test results confirm the non-stationarity observed in the ACF plots for most variables. Specifically, first differences suffices for all variables except the unemployment rate, which is stationary on the 5% level, and the CPI and CLI, which require second-order differencing. 
 ```{r ADF_table,  message=FALSE, warning=FALSE}
 
-
+#code  idea from Yobin(2023)
 perform_adf_tests <- function(df) {
   # Create an empty dataframe to store the results
   results <- data.frame(Variable = character(), TestType = character(), 
