@@ -25,9 +25,9 @@ Accurate forecasting of real wages is imperative for policymakers and businesses
 **Real Wages** defined as:
 
 ```{=tex}
-\begin{gather}
+\begin{align}
 \log Real\:wages = \log Nominal\:wages\:- \log CPI 
-\end{gather}
+\end{align}
 ```
 
 # Data
@@ -213,7 +213,7 @@ for (j in 1:ncol(df)) {
 ### PACF Analysis
 
 The Partial Autocorrelation (PACF) plots for the time series predominantly exhibit significant partial autocorrelations at the first lag for all variables, followed by a rapid convergence to the confidence bounds. 
-This pattern suggests that the data could be wel represented by a first order autoregrssive model. 
+This pattern suggests that the data could be well represented by a first order autoregressive model. 
 ```{r PACF plots, echo = FALSE}
 par(mfrow = c(4, 3), mar = c(2, 2, 3, 2))
 for (j in 1:ncol(df)) {
@@ -281,18 +281,100 @@ rmarkdown::paged_table(adf_test_results, options = list(pageLength = 11))
 ```
 
 # The model
-
-To analyze the macroeconomic and financial variables and run forecasts, a vector autoregression (VAR) model can be applied, which allows for the multivariate framework of several time series. A general VAR model with $\rho$ lags for $t=1,...,T$ can be stated as:
+## VAR representation
+To analyze the macroeconomic and financial variables and run forecasts, a Vector autoregression (VAR) model, introduced by @sims1972money can be applied, which allows for the multivariate framework of several time series. A general VAR model with $\rho$ lags for $t=1,...,T$ can be stated as:
 
 ```{=tex}
-\begin{gather}
+\begin{align}
 y_{t}   &=\mu_{0}+A_{1}y_{t-1}+...+A_{\rho}y_{t-\rho}+\epsilon_{t}\\
 \epsilon_{t}|Y_{T-1}    &\sim iid\left(0_{N},\Sigma\right)
-\end{gather}
+\end{align}
 ```
-Where $y_{t}=N\times1$ is a vector of observations at time $t$, $\mu_{0}=N\times1$ is a vector of constant terms, $A_{i}=N\times N$ is a vector of the autoregressive slope parameters, $\epsilon_{t}=N\times1$ is a vector of error terms, $Y_{t-1}$ is the information set and $\Sigma=N\times N$ is the covariance matrix of the error term.
+Where $y_{t}$ is a $N\times 1$ vector of observations at time $t$, $\mu_{0}$ is a $N\times1$ vector of constant terms, $A_{i}$ is a $N\times N$ vector of the autoregressive slope parameters, $\epsilon_{t}$ is a $N \times 1$ vector of error terms, $Y_{t-1}$ is the information set and $\Sigma$ is the $N \times N$ covariance matrix of the error term.
 
-(TBC)
+## Baseline estimation
+
+In order to define the baseline model, additional notation is being introduced following @wozniak2016bayesian.
+
+Let a $K \times 1$ vector with $K=1+kN$ collect all of the data vectors on the RHS of the equation 
+$\mathbf{x}_t = \left(1, y_{t-1}', \ldots, y_{t-k}' \right)$
+and $K\times N$ matrix the intercept term and the autoregressive matrices 
+$\mathbf{A} = \left(\mu, A_1, ... , A_k \right)'$, then the VAR process can be written as 
+```{=tex}
+\begin{align}
+y_t' &= x_t'A + \epsilon_t'.
+\end{align}
+```
+If then all vectors $y_t'$ for t going from 1 to T are stacked under one another, one can form a $T \times N$ matrix $Y = (y_1, y_2, ..., y_T)'$ and similarly $X= (x_1, x_2,...,x_T)'$, with dimensions $T \times K$, as well as $E = (\epsilon_1, \epsilon_2,...,\epsilon_T)'$, a $T \times N$ matrix, to write the model as
+
+```{=tex}
+\begin{align}
+Y=XA + E\\
+Y|X,A,\Sigma &\sim MN_{T \times N} (XA, \Sigma, I_T).
+\end{align}
+```
+The likelihood function can be written as
+```{=tex}
+\begin{align}
+L(A,\Sigma|Y,X) &= (2\pi)^{-\frac{TN}{2}} det(\Sigma)^{-\frac{T}{2}}exp(-\frac{1}{2}tr[\Sigma^{-1}(Y-XA)'(Y-XA)]),
+\end{align}
+```
+which can be rewritten as 
+```{=tex}
+\begin{align}
+L(A,\Sigma|Y,X) &\propto det(\Sigma)^{-\frac{T}{2}} exp \left\{-\frac{1}{2} tr \left[ \Sigma^{-1}(A-\hat{A})'X'X(A-\hat{A}) \right] \right\}\\
+&\times exp \left\{-\frac{1}{2} tr \left[\Sigma^{-1}(Y-X \hat{A})'(Y-X \hat{A}) \right] \right\},
+\end{align}
+```
+by expressing the maximum likelihood estimators as:
+```{=tex}
+\begin{align}
+\hat{A} &= (X'X)^{-1}X'Y\\
+\hat{\Sigma} &= \frac{1}{T} (Y-X \hat{A})'(Y-X \hat{A}).
+\end{align}
+```
+The natural conjugate priors for $A$ and $\Sigma$ are assumed to follow a matrix normal and inverse Wishart distribution respectively:     
+```{=tex}
+\begin{align}
+p(A,\Sigma) &= MNIW(\underline{A},\underline{S},\underline{V},\underline{\nu})\\
+A|\Sigma &\sim MN_{K \times N}(\underline{A},\Sigma,\underline{V}) \\
+\Sigma &\sim IW_N(\underline{S},\underline{\nu}),
+\end{align}
+```
+with the priors to be specified as Minnesota priors following @doan1984forecasting
+```{=tex}
+\begin{align}
+\underline{A} &= [0_{N \times 1}, \quad I_N, \quad 0_{N \times (p-1)N}]'\\
+\underline{V} &= diag([\kappa_2, \quad \kappa_1 (p^{-2} \otimes I_N)]).
+\end{align}
+```
+
+The joint posterior distribution is then given by the product of the likelihood and the priors:
+```{=tex}
+\begin{align}
+p(A,\Sigma|Y,X) &\propto \det(\Sigma)^{-\frac{T}{2}} \\
+&\times exp(-\frac{1}{2}tr[\Sigma^{-1}(Y-XA)'(Y-XA)]) \\
+&\times \det(\Sigma)^{-\frac{N+K+\underline{v}+1}{2}} \\
+&\times exp(-\frac{1}{2}tr[\Sigma^{-1}(A-\underline{A})'\underline(V)^{-1}(A-\underline{A})]) \\
+&\times exp(-\frac{1}{2}tr[\Sigma^{-1}\underline{S}]).
+\end{align}
+```
+Combining terms yields the following distirbutions for $A$ and $\Sigma$:
+```{=tex}
+\begin{align}
+p(A|Y,X,\Sigma) &= MN_{K \times N}(\bar{A}, \Sigma, \bar{V}) \\
+p(\Sigma|Y,X) &= IW_N(\bar{S},\bar{\nu}),
+\end{align}
+```
+where paramters $\bar{A}$ , $\bar{V}$, $\bar{S}$ and $\bar{\nu}$ characterise the posterior distribution and are given by 
+```{=tex}
+\begin{align}
+\bar{V} &= (X'X + \underline{V}^{-1})^{-1} \\
+\bar{A} &= \bar{V}(X'Y + \underline{V}^{-1}\underline{A}) \\
+\bar{\nu} &= T + \underline{\nu} \\
+\bar{S} &= \underline{S} + Y'Y + \underline{A}'\underline{V}^{-1}\underline{A} - \bar{A}'\bar{V}^{-1}\bar{A}.
+\end{align}
+```
 
 ```{r Model set-up}
 data = as.matrix(df)
@@ -326,10 +408,8 @@ Sigma.hat   = t(Y-X%*%A.hat)%*%(Y-X%*%A.hat)/nrow(Y)
 
 Minnesota prior are calculated as presented in @lutkepohl2005new .
 
-```{r Minnesota priors}
+```{r Minnesota priors , echo=TRUE}
 priors <- function(p, X, Y){
-  
-  
   
   A.hat = solve(t(X)%*%X)%*%(t(X)%*%Y)
   Sigma.hat = diag(ncol(Y))
@@ -351,8 +431,7 @@ priors <- function(p, X, Y){
   
   return(priors.list)
 }
-
-priors(p, X, Y)
+#priors(p, X, Y)
 ```
 
 # References {.unnumbered}
