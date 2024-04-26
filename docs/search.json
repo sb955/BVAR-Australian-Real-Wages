@@ -2,85 +2,57 @@
   {
     "objectID": "index.html",
     "href": "index.html",
-    "title": "Forecasting Australian Real Wages Growth Rates",
-    "section": "",
-    "text": "Abstract. This project employs a Bayesian Vector Autoregression (BVAR) model to forecast Australian real wages growth rates for future periods. Beginning in 2021, Australian households experienced negative growth rates in real wages, but recent trends indicate a rebound. Therefore, a positive trajectory in real wages growth rate is anticipated for the upcoming periods.\nKeywords. BVARs, Real Wages Growth Rates, Inflation, Households"
-  },
-  {
-    "objectID": "index.html#references",
-    "href": "index.html#references",
-    "title": "Real Wage Growth Rate Forecasts",
-    "section": "References",
-    "text": "References"
-  },
-  {
-    "objectID": "index.html#r-environment",
-    "href": "index.html#r-environment",
-    "title": "Real Wage Growth Rate Forecasts",
-    "section": "R environment",
-    "text": "R environment"
-  },
-  {
-    "objectID": "index.html#plot-real-growth-rate-over-time",
-    "href": "index.html#plot-real-growth-rate-over-time",
-    "title": "Real Wage Growth Rate Forecasts",
-    "section": "Plot Real Growth Rate Over Time",
-    "text": "Plot Real Growth Rate Over Time"
-  },
-  {
-    "objectID": "index.html#model-setup",
-    "href": "index.html#model-setup",
     "title": "Forecasting Australian Real Wages",
-    "section": "Model setup",
-    "text": "Model setup\nWe will define real wages as:\n\\[\\begin{align}\nReal\\: Wages\\: =\\: Nominal\\: Wages\\: -\\: Inflation\n\\end{align}\\]"
-  },
-  {
-    "objectID": "index.html#data-extraction-andtransformation",
-    "href": "index.html#data-extraction-andtransformation",
-    "title": "Real Wage Growth Rate Forecasts",
-    "section": "Data extraction andtransformation",
-    "text": "Data extraction andtransformation\nOur main indicators use quarterly data, therefore all indicators are transformed to quarterly time series.\nAs extracted time series data for real wages begins in 1997, we will set this as our start date for the analysis.\n\n\nLade nötiges Paket: xts\n\n\nLade nötiges Paket: zoo\n\n\n\nAttache Paket: 'zoo'\n\n\nDie folgenden Objekte sind maskiert von 'package:base':\n\n    as.Date, as.Date.numeric\n\n\nLade nötiges Paket: TTR\n\n\nRegistered S3 method overwritten by 'quantmod':\n  method            from\n  as.zoo.data.frame zoo \n\n\nEnvironment variable 'R_READABS_PATH' is unset. Downloaded files will be saved in a temporary directory.\nYou can set 'R_READABS_PATH' at any time. To set it for the rest of this session, use\n    Sys.setenv(R_READABS_PATH = &lt;path&gt;)\n\n\n\n######################### Warning from 'xts' package ##########################\n#                                                                             #\n# The dplyr lag() function breaks how base R's lag() function is supposed to  #\n# work, which breaks lag(my_xts). Calls to lag(my_xts) that you type or       #\n# source() into this session won't work correctly.                            #\n#                                                                             #\n# Use stats::lag() to make sure you're not using dplyr::lag(), or you can add #\n# conflictRules('dplyr', exclude = 'lag') to your .Rprofile to stop           #\n# dplyr from breaking base R's lag() function.                                #\n#                                                                             #\n# Code in packages is not affected. It's protected by R's namespace mechanism #\n# Set `options(xts.warn_dplyr_breaks_lag = FALSE)` to suppress this warning.  #\n#                                                                             #\n###############################################################################\n\n\n\nAttache Paket: 'dplyr'\n\n\nDie folgenden Objekte sind maskiert von 'package:xts':\n\n    first, last\n\n\nDie folgenden Objekte sind maskiert von 'package:stats':\n\n    filter, lag\n\n\nDie folgenden Objekte sind maskiert von 'package:base':\n\n    intersect, setdiff, setequal, union\n\n\nLade nötiges Paket: tframe\n\n\n\n\nFinding URLs for tables corresponding to ABS series IDA2325850V\n\n\nAttempting to download files from series IDA2325850V, Consumer Price Index, Australia\n\n\nExtracting data from downloaded spreadsheets\n\n\nTidying data from imported ABS spreadsheets\n\n\nFinding URLs for tables corresponding to ABS series IDA2314866J\n\n\nAttempting to download files from series IDA2314866J, Producer Price Indexes, Australia\n\n\nExtracting data from downloaded spreadsheets\n\n\nTidying data from imported ABS spreadsheets\n\n\nFinding URLs for tables corresponding to ABS series IDA2294887L\n\n\nAttempting to download files from series IDA2294887L, International Trade Price Indexes, Australia\n\n\nExtracting data from downloaded spreadsheets\n\n\nTidying data from imported ABS spreadsheets\n\n\nFinding URLs for tables corresponding to ABS series IDA2295766K\n\n\nAttempting to download files from series IDA2295766K, International Trade Price Indexes, Australia\n\n\nExtracting data from downloaded spreadsheets\n\n\nTidying data from imported ABS spreadsheets\n\n\nFinding URLs for tables corresponding to ABS series IDA4083524T\n\n\nAttempting to download files from series IDA4083524T, Selected Living Cost Indexes, Australia\n\n\nExtracting data from downloaded spreadsheets\n\n\nTidying data from imported ABS spreadsheets\n\n\nFinding URLs for tables corresponding to ABS series IDA84423093A\n\n\nAttempting to download files from series IDA84423093A, Labour Force, Australia\n\n\nExtracting data from downloaded spreadsheets\n\n\nTidying data from imported ABS spreadsheets\n\n\n\nData preview\n\n\n                                              \n1 function (x, df1, df2, ncp, log = FALSE)    \n2 {                                           \n3     if (missing(ncp))                       \n4         .Call(C_df, x, df1, df2, log)       \n5     else .Call(C_dnf, x, df1, df2, ncp, log)\n6 }                                           \n\n\n\n\nData plots"
-  },
-  {
-    "objectID": "index.html#data-extraction-and-transformation",
-    "href": "index.html#data-extraction-and-transformation",
-    "title": "Forecasting Australian Real Wages Growth Rates",
-    "section": "Data extraction and transformation",
-    "text": "Data extraction and transformation\nSince our main indicators are based on quarterly data, all indicators are converted into quarterly time series.\nGiven that the extracted time series data for the production price index starts in 1998 Q4, we will use this as the starting date for our analysis."
-  },
-  {
-    "objectID": "index.html#preliminary-data-analysis",
-    "href": "index.html#preliminary-data-analysis",
-    "title": "Forecasting Australian Real Wages Growth Rates",
-    "section": "Preliminary data analysis",
-    "text": "Preliminary data analysis\n\nACF Analysis\n\n\n\n\n\n\n\nPACF Analysis\n\n\n\n\n\n\n\nAugmented Dickey-Fuller test"
-  },
-  {
-    "objectID": "index.html#indicators",
-    "href": "index.html#indicators",
-    "title": "Forecasting Australian Real Wages Growth Rates",
-    "section": "Indicators",
-    "text": "Indicators\n\nAustralian Labor and Financial Data\nFollowing indicators will be used in the model. Indicators on global economic factors will be included later in this project.\n\n\n\nIndicator\nIndex\nSource\nUnit\nPeriod\n\n\n\n\nNominal Wages\nWPI\nRBA\n%\n1997-2024\n\n\nInflation\nCPI\nABS\n%\n1948-2023\n\n\nReal Wages\nWPI - CPI\nABS/RBA\n%\n1997-2024\n\n\nProducer Prices\nPPI\nABS\n%\n1998-2023\n\n\nExport Index\nEPI\nABS\n%\n1998-2023\n\n\nImport Index\nIPI\nABS\n%\n1998-2023\n\n\nCost of Living\nCLI\nABS\n%\n1998-2023\n\n\nUnemployment\nUR\nRBA\n%\n1978-2024\n\n\nLabor Participation\nLPR\nABS\n%\n1978-2024\n\n\nLog Hours Worked\nHW\nRBA\n-\n1978-2024\n\n\nLog Real GDP\nReal GDP\nRBA\nMillion AUD\n1959-2023"
-  },
-  {
-    "objectID": "index.html#descriptive-analysis",
-    "href": "index.html#descriptive-analysis",
-    "title": "Forecasting Australian Real Wages Growth Rates",
-    "section": "Descriptive Analysis",
-    "text": "Descriptive Analysis\n\nData Overview\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nDate\nNominal.WPI\nCPI\nReal.WPI\nPPI\nEXPI\nIMPI\nCLI\nUnemployment\nParticipation\nLog.Hours.Worked\nLog.Real.GDP\n\n\n\n\n1998-12-31\n0.7\n0.4\n0.3\n-0.6\n-5.0\n-1.0\n65.9\n7.044860\n63.53082\n14.04631\n12.63974\n\n\n1999-03-31\n0.7\n0.0\n0.7\n-0.3\n-3.8\n-2.2\n65.7\n7.348020\n62.90669\n14.05472\n12.64707\n\n\n1999-06-30\n0.9\n0.4\n0.5\n0.3\n-2.7\n-2.6\n65.9\n6.476035\n62.54834\n14.04771\n12.65050\n\n\n1999-09-30\n0.6\n0.9\n-0.3\n0.8\n1.1\n-0.1\n66.5\n7.080555\n63.49623\n14.06500\n12.66185\n\n\n1999-12-31\n0.7\n0.6\n0.1\n0.8\n4.3\n2.2\n66.7\n6.568227\n63.82390\n14.08113\n12.67871\n\n\n\n\n\n\n\nData Plots\nThe accompanying graphs depict the recent trends in the selected economic indicators. Notably, the Wage Price Index (WPI) has shown an upward trajectory recently, while the Consumer Price Index (CPI) has concurrently exhibited a decline. This divergence has facilitated a recovery in the real WPI from previously negative growth rates experienced in the post-COVID period. Additionally, significant increases have been observed in the growth rates of the Cost of Living Index and the Producer Price Index, highlighting notable shifts in economic conditions."
+    "section": "",
+    "text": "Abstract. This project employs a Bayesian Vector Autoregression (BVAR) model to forecast Australian real wages for future periods. Beginning in 2021, Australian households experienced negative growth rates in real wages, but recent trends indicate a rebound. Therefore, a positive trajectory in real wages is anticipated for the upcoming periods.\nKeywords. BVARs, Real Wages, Inflation, Households"
   },
   {
     "objectID": "index.html#theory-base",
     "href": "index.html#theory-base",
-    "title": "Forecasting Australian Real Wages Growth Rates",
+    "title": "Forecasting Australian Real Wages",
     "section": "Theory base",
-    "text": "Theory base\nReal Wages Rates defined as:\n\\[\\begin{gather}\n\\% \\Delta Real\\:wages = \\% \\Delta Nominal\\:wages\\:- Inflation\n\\end{gather}\\]"
+    "text": "Theory base\nReal Wages defined as:\n\\[\\begin{align}\n\\log Real\\:wages = \\log Nominal\\:wages\\:- \\log CPI\n\\end{align}\\]"
   },
   {
-    "objectID": "index.html#model-base",
-    "href": "index.html#model-base",
-    "title": "Forecasting Australian Real Wages Growth Rates",
-    "section": "Model base",
-    "text": "Model base\nBVARs Model in this research:\n\\[\\begin{aligned}\ny_t &= \\mu_0 + A_1y_{t-1} + A_2y_{t-2}...+A_py_{t-p} +\\epsilon_t\\\\\n\n\\epsilon_t|Y_{t-1} &\\sim iid \\mathcal{N}_{17}(0_{17}, \\Sigma)\n\\end{aligned}\\]\n\nExplain of model assumptions and labels"
+    "objectID": "index.html#indicators",
+    "href": "index.html#indicators",
+    "title": "Forecasting Australian Real Wages",
+    "section": "Indicators",
+    "text": "Indicators\n\nAustralian Labor and Financial Data\nFollowing indicators will be used in the model. Indicators on global economic factors will be included later in this project.\n\n\n\nIndicator\nIndex\nSource\nUnit\nPeriod\n\n\n\n\nReal Wages\nWPI - CPI\nABS/RBA\n%\n1997-2024\n\n\nInflation\nCPI\nABS\n%\n1948-2023\n\n\nProducer Prices\nPPI\nABS\n%\n1998-2023\n\n\nExport Index\nEPI\nABS\n%\n1998-2023\n\n\nImport Index\nIPI\nABS\n%\n1998-2023\n\n\nCost of Living\nCLI\nABS\n%\n1998-2023\n\n\nUnemployment\nUR\nRBA\n%\n1978-2024\n\n\nLabor Participation\nLPR\nABS\n%\n1978-2024\n\n\nLog Hours Worked\nHW\nRBA\n-\n1978-2024\n\n\nLog Real GDP\nReal GDP\nRBA\nMillion AUD\n1959-2023"
+  },
+  {
+    "objectID": "index.html#data-extraction-and-transformation",
+    "href": "index.html#data-extraction-and-transformation",
+    "title": "Forecasting Australian Real Wages",
+    "section": "Data extraction and transformation",
+    "text": "Data extraction and transformation\nSince the main indicators are based on quarterly data, all indicators are converted into quarterly time series.\nGiven that the extracted time series data for the production price index starts in 1998 Q4, this quarter will work as the starting date of the analysis."
+  },
+  {
+    "objectID": "index.html#descriptive-analysis",
+    "href": "index.html#descriptive-analysis",
+    "title": "Forecasting Australian Real Wages",
+    "section": "Descriptive Analysis",
+    "text": "Descriptive Analysis\n\nData Overview\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nDate\nLog.of.Real.WPI\nLog.of.CPI\nLog.of.PPI\nLog.of.EXPI\nLog.of.IMPI\nLog.of.CLI\nlog.unempl\nlog.parti\nlog.h.worked\nLog.of.Real.GDP\n\n\n\n\n1998-12-31\n0.0233247\n4.216562\n4.261270\n3.899950\n4.624973\n4.188138\n1.954982\n4.143595\n15.14428\n12.63974\n\n\n1999-03-31\n0.0305035\n4.216562\n4.258446\n3.860730\n4.603168\n4.185099\n2.033353\n4.138257\n15.14749\n12.64707\n\n\n1999-06-30\n0.0332161\n4.220977\n4.261270\n3.832980\n4.576771\n4.188138\n1.922737\n4.136550\n15.15045\n12.65050\n\n\n1999-09-30\n0.0315212\n4.229749\n4.269697\n3.843744\n4.575741\n4.197202\n1.897081\n4.138318\n15.16141\n12.66185\n\n\n1999-12-31\n0.0327431\n4.235555\n4.278054\n3.885679\n4.597138\n4.200205\n1.848368\n4.144242\n15.17622\n12.67871\n\n\n\n\n\n\n\nData Plots\nThe accompanying graphs depict the recent trends in the selected economic indicators. Notably, the Real Wage Price Index has dropped significantly since the beginning of COVID in March 2020. Concurrently, the Consumer Price Index has exhibited larger growth rates in the same period. Recently, a slight upward trend in Real Wages can be observed, though they remain below pre-pandemic levels.\nOther indicators like Cost of Living Index, the Import Index and the Producer Price Index also reveal increasing trends, highlighting notable shifts in economic conditions, with Export Prices also shifting upwards. However, labor market conditions appear resilient, with falling unemployment, stable participation rates, and increased working hours. Real GDP’s upward trend suggests a recovery to pre-pandemic economic activity levels."
+  },
+  {
+    "objectID": "index.html#preliminary-data-analysis",
+    "href": "index.html#preliminary-data-analysis",
+    "title": "Forecasting Australian Real Wages",
+    "section": "Preliminary data analysis",
+    "text": "Preliminary data analysis\n\nACF Analysis\nThe Autocorrelation Function (ACF) plots demonstrate a decay in correlation coefficients for all time series, with the memories of Import Index and Unemployment dropping slightly faster than the rest, indicating the presence of substantial memory. The initial lags exhibit significant autocorrelation, signifying non-stationary behavior. This persistence in the time series necessitates statistical differencing to ensure stationarity.\n\n\n\n\n\n\n\nPACF Analysis\nThe Partial Autocorrelation (PACF) plots for the time series predominantly exhibit significant partial autocorrelations at the first lag for all variables, followed by a rapid convergence to the confidence bounds. This pattern suggests that the data could be well represented by a first order autoregressive model.\n\n\n\n\n\n\n\nAugmented Dickey-Fuller test\nThe ADF test results confirm the non-stationarity observed in the ACF plots for most variables. Specifically, first differences suffices for all variables except the unemployment rate, which is stationary on the 5% level, and the CPI and CLI, which require second-order differencing."
+  },
+  {
+    "objectID": "index.html#baseline-estimation",
+    "href": "index.html#baseline-estimation",
+    "title": "Forecasting Australian Real Wages",
+    "section": "Baseline estimation",
+    "text": "Baseline estimation\nIn order to define the baseline model, additional notation is being introduced following Woźniak (2016).\nLet a \\(K \\times 1\\) vector with \\(K=1+kN\\) collect all of the data vectors on the RHS of the equation \\(\\mathbf{x}_t = \\left(1, y_{t-1}', \\ldots, y_{t-k}' \\right)\\) and \\(K\\times N\\) matrix the intercept term and the autoregressive matrices \\(\\mathbf{A} = \\left(\\mu, A_1, ... , A_k \\right)'\\), then the VARprocess can be written as\n\\[\\begin{align}\ny_t' &= x_t'A + \\epsilon_t'.\n\\end{align}\\]\nIf then all vectors \\(y_t'\\) for t going from 1 to T are stacked under one another, one can form a \\(T \\times N\\) matrix \\(Y = (y_1, y_2, ..., y_T)'\\) and similarly \\(X= (x_1, x_2,...,x_T)'\\), with dimensions \\(T \\times K\\), as well as \\(E = (\\epsilon_1, \\epsilon_2,...,\\epsilon_T)'\\), a \\(T \\times N\\) matrix, to write the model as\n\\[\\begin{align}\nY=XA + E\\\\\nY|X,A,\\Sigma &\\sim MN_{T \\times N} (XA, \\Sigma, I_T).\n\\end{align}\\]\nThis implies the kernel\n\\[\\begin{align}\nL(A,\\Sigma|Y,X) &\\propto det(\\Sigma)^{-\\frac{T}{2}}exp(-\\frac{1}{2}tr[\\Sigma^{-1}(Y-XA)'(Y-XA)])\n\\end{align}\\]\nwhich can be rewritten as\n\\[\\begin{align}\n&=det(\\Sigma)^{-\\frac{T}{2}} exp \\left\\{-\\frac{1}{2} tr \\left[ \\Sigma^{-1}(A-\\hat{A})'X'X(A-\\hat{A}) \\right] \\right\\}\\\\\n&\\times exp \\left\\{-\\frac{1}{2} tr \\left[\\Sigma^{-1}(Y-X \\hat{A})'(Y-X \\hat{A}) \\right] \\right\\}\n\\end{align}\\]\nby expressing the maximum likelihood estimators as:\n\\[\\begin{align}\n\\hat{A} &= (X'X)^{-1}X'Y\\\\\n\\hat{\\Sigma} &= \\frac{1}{T} (Y-X \\hat{A})'(Y-X \\hat{A}).\n\\end{align}\\]\nThe natural conjugate priors for \\(A\\) and \\(\\Sigma\\) are assumed to follow a matrix normal and inverse Wishart distribution respectively:\n\\[\\begin{align}\np(A,\\Sigma) &= MNIW(\\underline{A},\\underline{S},\\underline{V},\\underline{\\nu})\\\\\nA|\\Sigma &\\sim MN_{K \\times N}(\\underline{A},\\Sigma,\\underline{V}) \\\\\n\\Sigma &\\sim IW_N(\\underline{S},\\underline{\\nu}),\n\\end{align}\\]\nwith the priors to be specified as Minnesota priors following Doan, Litterman, and Sims (1984)\n\\[\\begin{align}\n\\underline{A} &= [0_{N \\times 1}, \\quad I_N, \\quad 0_{N \\times (p-1)N}]'\\\\\n\\underline{V} &= diag([\\kappa_2, \\quad \\kappa_1 (p^{-2} \\otimes I_N)]).\n\\end{align}\\]\nThe joint posterior distribution is then given by the product of the likelihood and the priors:\n\\[\\begin{align}\np(A,\\Sigma|Y,X) &\\propto \\det(\\Sigma)^{-\\frac{T}{2}} \\\\\n&\\times exp(-\\frac{1}{2}tr[\\Sigma^{-1}(Y-XA)'(Y-XA)]) \\\\\n&\\times \\det(\\Sigma)^{-\\frac{N+K+\\underline{v}+1}{2}} \\\\\n&\\times exp(-\\frac{1}{2}tr[\\Sigma^{-1}(A-\\underline{A})'\\underline(V)^{-1}(A-\\underline{A})]) \\\\\n&\\times exp(-\\frac{1}{2}tr[\\Sigma^{-1}\\underline{S}]).\n\\end{align}\\]\nCombining terms yields the following distirbutions for \\(A\\) and \\(\\Sigma\\):\n\\[\\begin{align}\np(A|Y,X,\\Sigma) &= MN_{K \\times N}(\\bar{A}, \\Sigma, \\bar{V}) \\\\\np(\\Sigma|Y,X) &= IW_N(\\bar{S},\\bar{\\nu}),\n\\end{align}\\]\nwhere paramters \\(\\bar{A}\\) , \\(\\bar{V}\\), \\(\\bar{S}\\) and \\(\\bar{\\nu}\\) characterise the posterior distribution and are given by\n\\[\\begin{align}\n\\bar{V} &= (X'X + \\underline{V}^{-1})^{-1} \\\\\n\\bar{A} &= \\bar{V}(X'Y + \\underline{V}^{-1}\\underline{A}) \\\\\n\\bar{\\nu} &= T + \\underline{\\nu} \\\\\n\\bar{S} &= \\underline{S} + Y'Y + \\underline{A}'\\underline{V}^{-1}\\underline{A} - \\bar{A}'\\bar{V}^{-1}\\bar{A}.\n\\end{align}\\]"
+  },
+  {
+    "objectID": "index.html#minnesota-priors",
+    "href": "index.html#minnesota-priors",
+    "title": "Forecasting Australian Real Wages",
+    "section": "Minnesota Priors",
+    "text": "Minnesota Priors\nMinnesota prior are calculated as presented in Lütkepohl (2005) .\n\npriors &lt;- function(p, X, Y){\n  \n  A.hat = solve(t(X)%*%X)%*%(t(X)%*%Y)\n  Sigma.hat = diag(ncol(Y))\n  N = ncol(Y)\n    \n  #set kapps\n  kappa.1 &lt;- 0.02^2\n  kappa.2 &lt;-100\n  \n  K = 1 + (p*N)\n  \n  A.prior     = matrix(0,nrow(A.hat),ncol(A.hat))\n  A.prior[2:(N+1),] = diag(N)\n  V.prior     = diag(c(kappa.2,kappa.1*((1:p)^(-2))%x%rep(1,N)))\n  S.prior     = diag(diag(Sigma.hat))\n  nu.prior    = N+1\n  \n  priors.list &lt;- list(A.prior = A.prior , V.prior=V.prior, S.prior=S.prior, nu.prior=nu.prior)\n  \n  return(priors.list)\n}\n#priors(p, X, Y)"
   }
 ]
