@@ -292,4 +292,67 @@ y_{t}   &=\mu_{0}+A_{1}y_{t-1}+...+A_{\rho}y_{t-\rho}+\epsilon_{t}\\
 ```
 Where $y_{t}=N\times1$ is a vector of observations at time $t$, $\mu_{0}=N\times1$ is a vector of constant terms, $A_{i}=N\times N$ is a vector of the autoregressive slope parameters, $\epsilon_{t}=N\times1$ is a vector of error terms, $Y_{t-1}$ is the information set and $\Sigma=N\times N$ is the covariance matrix of the error term.
 
+(TBC)
+
+```{r Model set-up}
+data = as.matrix(df)
+#number of observations
+N = ncol(data)
+#number of lags
+p       =1
+#K
+K       = 1 + p*N
+# forecast horizon
+h       = 8
+#define Y
+Y       = data[(p+1):nrow(data),]
+x       = matrix(1,nrow(Y),1)
+# nrow(X)
+for (i in 1:p){
+  X     = cbind(x,as.matrix(data[(p+1):nrow(data)-i,]))
+}
+```
+
+```{Maximum Likelihood}
+XX = solve(t(X)%*%X)
+A.hat       = solve(t(X)%*%X)%*%t(X)%*%Y
+Sigma.hat   = t(Y-X%*%A.hat)%*%(Y-X%*%A.hat)/nrow(Y)
+# round(A.hat,3)
+# round(Sigma.hat,3)
+# round(cov2cor(Sigma.hat),3)
+```
+
+## Minnesota Priors
+
+Minnesota prior are calculated as presented in @lutkepohl2005new .
+
+```{r Minnesota priors}
+priors <- function(p, X, Y){
+  
+  
+  
+  A.hat = solve(t(X)%*%X)%*%(t(X)%*%Y)
+  Sigma.hat = diag(ncol(Y))
+  N = ncol(Y)
+    
+  #set kapps
+  kappa.1 <- 0.02^2
+  kappa.2 <-100
+  
+  K = 1 + (p*N)
+  
+  A.prior     = matrix(0,nrow(A.hat),ncol(A.hat))
+  A.prior[2:(N+1),] = diag(N)
+  V.prior     = diag(c(kappa.2,kappa.1*((1:p)^(-2))%x%rep(1,N)))
+  S.prior     = diag(diag(Sigma.hat))
+  nu.prior    = N+1
+  
+  priors.list <- list(A.prior = A.prior , V.prior=V.prior, S.prior=S.prior, nu.prior=nu.prior)
+  
+  return(priors.list)
+}
+
+priors(p, X, Y)
+```
+
 # References {.unnumbered}
