@@ -8,7 +8,7 @@ execute:
 bibliography: references.bib
 ---
 
-> **Abstract.** This project employs a Bayesian Vector Autoregression (BVAR) model to forecast Australian real wages for future periods. Beginning in 2021, Australian households experienced negative growth rates in real wages, but recent trends indicate a rebound. Therefore, a positive trajectory in real wages is anticipated for the upcoming periods.
+> **Abstract.** This project employs a Bayesian Vector Autoregression (BVAR) model to forecast Australian real wages for future periods. Beginning in 2021, Australian households experienced a shrinkage in real wages. However, recent trends suggest a recovery, leading to an expected upward trend in real wages in the coming periods.
 >
 > **Keywords.** BVARs, Real Wages, Inflation, Households
 
@@ -52,7 +52,7 @@ Following indicators will be used in the model. Indicators on global economic fa
 | Export Index        | EPI       | ABS     | \%          | 1998-2023 |
 | Import Index        | IPI       | ABS     | \%          | 1998-2023 |
 | Cost of Living      | CLI       | ABS     | \%          | 1998-2023 |
-| Unemployment        | UR        | RBA     | \%          | 1978-2024 |
+| Unemployment        | UR        | RBA     | Persons     | 1978-2024 |
 | Labor Participation | LPR       | ABS     | \%          | 1978-2024 |
 | Log Hours Worked    | HW        | RBA     | \-          | 1978-2024 |
 | Log Real GDP        | Real GDP  | RBA     | Million AUD | 1959-2023 |
