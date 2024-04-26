@@ -193,6 +193,7 @@ for (j in 1:ncol(df)) {
   plot(x = dates, y = df[, j], type = 'l',
        main = var_names[j], ylab = "", xlab = "",
        lwd = 2.5,
+       col='blue',
        ylim = c(min(df[, j], na.rm = TRUE), max(df[, j], na.rm = TRUE)))
 }
 ```

@@ -172,6 +172,7 @@ div.csl-indent {
   </ul></li>
   <li><a href="#the-model" id="toc-the-model" class="nav-link" data-scroll-target="#the-model">The model</a>
   <ul class="collapse">
+  <li><a href="#var-representation" id="toc-var-representation" class="nav-link" data-scroll-target="#var-representation">VAR representation</a></li>
   <li><a href="#baseline-estimation" id="toc-baseline-estimation" class="nav-link" data-scroll-target="#baseline-estimation">Baseline estimation</a></li>
   <li><a href="#minnesota-priors" id="toc-minnesota-priors" class="nav-link" data-scroll-target="#minnesota-priors">Minnesota Priors</a></li>
   </ul></li>
@@ -206,7 +207,7 @@ div.csl-indent {
 </header>
 
 <blockquote class="blockquote">
-<p><strong>Abstract.</strong> This project employs a Bayesian Vector Autoregression (BVAR) model to forecast Australian real wages for future periods. Beginning in 2021, Australian households experienced negative growth rates in real wages, but recent trends indicate a rebound. Therefore, a positive trajectory in real wages is anticipated for the upcoming periods.</p>
+<p><strong>Abstract.</strong> This project employs a Bayesian Vector Autoregression (BVAR) model to forecast Australian real wages for future periods. Beginning in 2021, Australian households experienced a shrinkage in real wages. However, recent trends suggest a recovery, leading to an expected upward trend in real wages in the coming periods.</p>
 <p><strong>Keywords.</strong> BVARs, Real Wages, Inflation, Households</p>
 </blockquote>
 <section id="research-question" class="level1">
@@ -291,7 +292,7 @@ div.csl-indent {
 <td>Unemployment</td>
 <td>UR</td>
 <td>RBA</td>
-<td>%</td>
+<td>Persons</td>
 <td>1978-2024</td>
 </tr>
 <tr class="even">
@@ -479,16 +480,19 @@ div.csl-indent {
 </section>
 <section id="the-model" class="level1">
 <h1>The model</h1>
+<section id="var-representation" class="level2">
+<h2 class="anchored" data-anchor-id="var-representation">VAR representation</h2>
 <p>To analyze the macroeconomic and financial variables and run forecasts, a Vector autoregression (VAR) model, introduced by <span class="citation" data-cites="sims1972money">Sims (<a href="#ref-sims1972money" role="doc-biblioref">1972</a>)</span> can be applied, which allows for the multivariate framework of several time series. A general VAR model with <span class="math inline">\(\rho\)</span> lags for <span class="math inline">\(t=1,...,T\)</span> can be stated as:</p>
 <span class="math display">\[\begin{align}
 y_{t}   &amp;=\mu_{0}+A_{1}y_{t-1}+...+A_{\rho}y_{t-\rho}+\epsilon_{t}\\
 \epsilon_{t}|Y_{T-1}    &amp;\sim iid\left(0_{N},\Sigma\right)
 \end{align}\]</span>
 <p>Where <span class="math inline">\(y_{t}\)</span> is a <span class="math inline">\(N\times 1\)</span> vector of observations at time <span class="math inline">\(t\)</span>, <span class="math inline">\(\mu_{0}\)</span> is a <span class="math inline">\(N\times1\)</span> vector of constant terms, <span class="math inline">\(A_{i}\)</span> is a <span class="math inline">\(N\times N\)</span> vector of the autoregressive slope parameters, <span class="math inline">\(\epsilon_{t}\)</span> is a <span class="math inline">\(N \times 1\)</span> vector of error terms, <span class="math inline">\(Y_{t-1}\)</span> is the information set and <span class="math inline">\(\Sigma\)</span> is the <span class="math inline">\(N \times N\)</span> covariance matrix of the error term.</p>
+</section>
 <section id="baseline-estimation" class="level2">
 <h2 class="anchored" data-anchor-id="baseline-estimation">Baseline estimation</h2>
 <p>In order to define the baseline model, additional notation is being introduced following <span class="citation" data-cites="wozniak2016bayesian">Woźniak (<a href="#ref-wozniak2016bayesian" role="doc-biblioref">2016</a>)</span>.</p>
-<p>Let a <span class="math inline">\(K \times 1\)</span> vector with <span class="math inline">\(K=1+kN\)</span> collect all of the data vectors on the RHS of the equation <span class="math inline">\(\mathbf{x}_t = \left(1, y_{t-1}', \ldots, y_{t-k}' \right)\)</span> and <span class="math inline">\(K\times N\)</span> matrix the intercept term and the autoregressive matrices <span class="math inline">\(\mathbf{A} = \left(\mu, A_1, ... , A_k \right)'\)</span>, then the VARprocess can be written as</p>
+<p>Let a <span class="math inline">\(K \times 1\)</span> vector with <span class="math inline">\(K=1+kN\)</span> collect all of the data vectors on the RHS of the equation <span class="math inline">\(\mathbf{x}_t = \left(1, y_{t-1}', \ldots, y_{t-k}' \right)\)</span> and <span class="math inline">\(K\times N\)</span> matrix the intercept term and the autoregressive matrices <span class="math inline">\(\mathbf{A} = \left(\mu, A_1, ... , A_k \right)'\)</span>, then the VAR process can be written as</p>
 <span class="math display">\[\begin{align}
 y_t' &amp;= x_t'A + \epsilon_t'.
 \end{align}\]</span>
@@ -497,14 +501,14 @@ y_t' &amp;= x_t'A + \epsilon_t'.
 Y=XA + E\\
 Y|X,A,\Sigma &amp;\sim MN_{T \times N} (XA, \Sigma, I_T).
 \end{align}\]</span>
-<p>This implies the kernel</p>
+<p>The likelihood function can be written as</p>
 <span class="math display">\[\begin{align}
-L(A,\Sigma|Y,X) &amp;\propto det(\Sigma)^{-\frac{T}{2}}exp(-\frac{1}{2}tr[\Sigma^{-1}(Y-XA)'(Y-XA)])
+L(A,\Sigma|Y,X) &amp;= (2\pi)^{-\frac{TN}{2}} det(\Sigma)^{-\frac{T}{2}}exp(-\frac{1}{2}tr[\Sigma^{-1}(Y-XA)'(Y-XA)]),
 \end{align}\]</span>
 <p>which can be rewritten as</p>
 <span class="math display">\[\begin{align}
-&amp;=det(\Sigma)^{-\frac{T}{2}} exp \left\{-\frac{1}{2} tr \left[ \Sigma^{-1}(A-\hat{A})'X'X(A-\hat{A}) \right] \right\}\\
-&amp;\times exp \left\{-\frac{1}{2} tr \left[\Sigma^{-1}(Y-X \hat{A})'(Y-X \hat{A}) \right] \right\}
+L(A,\Sigma|Y,X) &amp;\propto det(\Sigma)^{-\frac{T}{2}} exp \left\{-\frac{1}{2} tr \left[ \Sigma^{-1}(A-\hat{A})'X'X(A-\hat{A}) \right] \right\}\\
+&amp;\times exp \left\{-\frac{1}{2} tr \left[\Sigma^{-1}(Y-X \hat{A})'(Y-X \hat{A}) \right] \right\},
 \end{align}\]</span>
 <p>by expressing the maximum likelihood estimators as:</p>
 <span class="math display">\[\begin{align}
@@ -549,27 +553,30 @@ p(\Sigma|Y,X) &amp;= IW_N(\bar{S},\bar{\nu}),
 <div class="cell">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>priors <span class="ot">&lt;-</span> <span class="cf">function</span>(p, X, Y){</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>  A.hat <span class="ot">=</span> <span class="fu">solve</span>(<span class="fu">t</span>(X)<span class="sc">%*%</span>X)<span class="sc">%*%</span>(<span class="fu">t</span>(X)<span class="sc">%*%</span>Y)</span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>  Sigma.hat <span class="ot">=</span> <span class="fu">diag</span>(<span class="fu">ncol</span>(Y))</span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>  N <span class="ot">=</span> <span class="fu">ncol</span>(Y)</span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>  <span class="co">#set kapps</span></span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>  kappa<span class="fl">.1</span> <span class="ot">&lt;-</span> <span class="fl">0.02</span><span class="sc">^</span><span class="dv">2</span></span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>  kappa<span class="fl">.2</span> <span class="ot">&lt;-</span><span class="dv">100</span></span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>  K <span class="ot">=</span> <span class="dv">1</span> <span class="sc">+</span> (p<span class="sc">*</span>N)</span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>  A.prior     <span class="ot">=</span> <span class="fu">matrix</span>(<span class="dv">0</span>,<span class="fu">nrow</span>(A.hat),<span class="fu">ncol</span>(A.hat))</span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>  A.prior[<span class="dv">2</span><span class="sc">:</span>(N<span class="sc">+</span><span class="dv">1</span>),] <span class="ot">=</span> <span class="fu">diag</span>(N)</span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>  V.prior     <span class="ot">=</span> <span class="fu">diag</span>(<span class="fu">c</span>(kappa<span class="fl">.2</span>,kappa<span class="fl">.1</span><span class="sc">*</span>((<span class="dv">1</span><span class="sc">:</span>p)<span class="sc">^</span>(<span class="sc">-</span><span class="dv">2</span>))<span class="sc">%x%</span><span class="fu">rep</span>(<span class="dv">1</span>,N)))</span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>  S.prior     <span class="ot">=</span> <span class="fu">diag</span>(<span class="fu">diag</span>(Sigma.hat))</span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>  nu.prior    <span class="ot">=</span> N<span class="sc">+</span><span class="dv">1</span></span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>  priors.list <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">A.prior =</span> A.prior , <span class="at">V.prior=</span>V.prior, <span class="at">S.prior=</span>S.prior, <span class="at">nu.prior=</span>nu.prior)</span>
-<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(priors.list)</span>
-<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a><span class="co">#priors(p, X, Y)</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stopifnot</span>(<span class="fu">is.matrix</span>(Y), <span class="fu">is.matrix</span>(X))  <span class="co">#numeric</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stopifnot</span>(<span class="sc">!</span><span class="fu">any</span>(<span class="fu">is.na</span>(Y)), <span class="sc">!</span><span class="fu">any</span>(<span class="fu">is.na</span>(X))) <span class="co">#no NA</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>  A.hat <span class="ot">=</span> <span class="fu">solve</span>(<span class="fu">t</span>(X)<span class="sc">%*%</span>X)<span class="sc">%*%</span>(<span class="fu">t</span>(X)<span class="sc">%*%</span>Y)</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>  Sigma.hat <span class="ot">=</span> <span class="fu">diag</span>(<span class="fu">ncol</span>(Y))</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>  N <span class="ot">=</span> <span class="fu">ncol</span>(Y)</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>  <span class="co">#set kapps</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>  kappa<span class="fl">.1</span> <span class="ot">&lt;-</span> <span class="fl">0.02</span><span class="sc">^</span><span class="dv">2</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>  kappa<span class="fl">.2</span> <span class="ot">&lt;-</span><span class="dv">100</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>  K <span class="ot">=</span> <span class="dv">1</span> <span class="sc">+</span> (p<span class="sc">*</span>N)</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>  A.prior     <span class="ot">=</span> <span class="fu">matrix</span>(<span class="dv">0</span>,<span class="fu">nrow</span>(A.hat),<span class="fu">ncol</span>(A.hat))</span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>  A.prior[<span class="dv">2</span><span class="sc">:</span>(N<span class="sc">+</span><span class="dv">1</span>),] <span class="ot">=</span> <span class="fu">diag</span>(N)</span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>  V.prior     <span class="ot">=</span> <span class="fu">diag</span>(<span class="fu">c</span>(kappa<span class="fl">.2</span>,kappa<span class="fl">.1</span><span class="sc">*</span>((<span class="dv">1</span><span class="sc">:</span>p)<span class="sc">^</span>(<span class="sc">-</span><span class="dv">2</span>))<span class="sc">%x%</span><span class="fu">rep</span>(<span class="dv">1</span>,N)))</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>  S.prior     <span class="ot">=</span> <span class="fu">diag</span>(<span class="fu">diag</span>(Sigma.hat))</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>  nu.prior    <span class="ot">=</span> N<span class="sc">+</span><span class="dv">1</span></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>  priors.list <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">A.prior =</span> A.prior , <span class="at">V.prior=</span>V.prior, <span class="at">S.prior=</span>S.prior, <span class="at">nu.prior=</span>nu.prior)</span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(priors.list)</span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a><span class="co">#priors(p, X, Y)</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
 </section>
