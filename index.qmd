@@ -411,6 +411,9 @@ Minnesota prior are calculated as presented in @lutkepohl2005new .
 ```{r Minnesota priors , echo=TRUE}
 priors <- function(p, X, Y){
   
+  stopifnot(is.matrix(Y), is.matrix(X))  #numeric
+  stopifnot(!any(is.na(Y)), !any(is.na(X))) #no NA
+  
   A.hat = solve(t(X)%*%X)%*%(t(X)%*%Y)
   Sigma.hat = diag(ncol(Y))
   N = ncol(Y)
