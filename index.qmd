@@ -377,32 +377,36 @@ where paramters $\bar{A}$ , $\bar{V}$, $\bar{S}$ and $\bar{\nu}$ characterise th
 \end{align}
 ```
 
+```{r}
+#new libraries
+library(mvtnorm)
+library(plot3D)
+library(MASS)
+library(HDInterval)
+set.seed(123456)
+```
+
 ```{r Model set-up}
-data = as.matrix(df)
-#number of observations
-N = ncol(data)
-#number of lags
-p       =1
-#K
+y = ts(df, frequency=4)
+N = ncol(y)
+p       = 4
 K       = 1 + p*N
-# forecast horizon
+S       = 5000
 h       = 8
-#define Y
-Y       = data[(p+1):nrow(data),]
-x       = matrix(1,nrow(Y),1)
-# nrow(X)
+Y       = ts(y[(p+1):nrow(y),])
+X       = matrix(1,nrow(Y),1)
 for (i in 1:p){
-  X     = cbind(x,as.matrix(data[(p+1):nrow(data)-i,]))
+  X     = cbind(X,y[(p+1):nrow(y)-i,])
 }
 ```
 
-```{Maximum Likelihood}
+```{r Maximum Likelihood}
 XX = solve(t(X)%*%X)
 A.hat       = solve(t(X)%*%X)%*%t(X)%*%Y
 Sigma.hat   = t(Y-X%*%A.hat)%*%(Y-X%*%A.hat)/nrow(Y)
-# round(A.hat,3)
-# round(Sigma.hat,3)
-# round(cov2cor(Sigma.hat),3)
+round(A.hat,3)
+round(Sigma.hat,3)
+round(cov2cor(Sigma.hat),3)
 ```
 
 ## Minnesota Priors
@@ -410,32 +414,187 @@ Sigma.hat   = t(Y-X%*%A.hat)%*%(Y-X%*%A.hat)/nrow(Y)
 Minnesota prior are calculated as presented in @lutkepohl2005new .
 
 ```{r Minnesota priors , echo=TRUE}
-priors <- function(p, X, Y){
-  
-  stopifnot(is.matrix(Y), is.matrix(X))  #numeric
-  stopifnot(!any(is.na(Y)), !any(is.na(X))) #no NA
-  
-  A.hat = solve(t(X)%*%X)%*%(t(X)%*%Y)
-  Sigma.hat = diag(ncol(Y))
-  N = ncol(Y)
+N = ncol(Y)
     
-  #set kapps
-  kappa.1 <- 0.02^2
-  kappa.2 <-100
+#set kapps
+kappa.1 <- 0.02^2
+kappa.2 <-100
+K = 1 + (p*N)
   
-  K = 1 + (p*N)
-  
-  A.prior     = matrix(0,nrow(A.hat),ncol(A.hat))
-  A.prior[2:(N+1),] = diag(N)
-  V.prior     = diag(c(kappa.2,kappa.1*((1:p)^(-2))%x%rep(1,N)))
-  S.prior     = diag(diag(Sigma.hat))
-  nu.prior    = N+1
-  
-  priors.list <- list(A.prior = A.prior , V.prior=V.prior, S.prior=S.prior, nu.prior=nu.prior)
-  
-  return(priors.list)
-}
-#priors(p, X, Y)
+A.prior     = matrix(0,nrow(A.hat),ncol(A.hat))
+A.prior[2:(N+1),] = diag(N)
+V.prior     = diag(c(kappa.2,kappa.1*((1:p)^(-2))%x%rep(1,N)))
+S.prior     = diag(diag(Sigma.hat))
+nu.prior    = N+1
+
 ```
 
+```{r NIW posterior paramters}
+V.bar.inv   = t(X)%*%X + diag(1/diag(V.prior))
+V.bar       = solve(V.bar.inv)
+A.bar       = V.bar%*%(t(X)%*%Y + diag(1/diag(V.prior))%*%A.prior)
+nu.bar      = nrow(Y) + nu.prior
+S.bar       = S.prior + t(Y)%*%Y + t(A.prior)%*%diag(1/diag(V.prior))%*%A.prior - t(A.bar)%*%V.bar.inv%*%A.bar
+S.bar.inv   = solve(S.bar)
+
+```
+
+```{r Posterior darws}
+Sigma.posterior   = rWishart(S, df=nu.bar, Sigma=S.bar.inv)
+Sigma.posterior   = apply(Sigma.posterior,3,solve)
+Sigma.posterior   = array(Sigma.posterior,c(N,N,S))
+A.posterior       = array(rnorm(prod(c(dim(A.bar),S))),c(dim(A.bar),S))
+L                 = t(chol(V.bar))
+for (s in 1:S){
+  A.posterior[,,s]= A.bar + L%*%A.posterior[,,s]%*%chol(Sigma.posterior[,,s])
+}
+
+round(apply(A.posterior,1:2,mean),3)
+
+# report posterior means and sd of parameters
+A.E         = apply(A.posterior,1:2,mean)
+A.sd        = apply(A.posterior,1:2,sd)
+Sigma.E     = apply(Sigma.posterior,1:2,mean)
+Sigma.sd    = apply(Sigma.posterior,1:2,sd)
+
+library(xtable)
+xtable(rbind(format(t(A.E),digits=1, scientific=FALSE)[1,],
+      format(t(A.sd),digits=1, scientific=FALSE)[1,],
+      format(t(A.E),digits=1, scientific=FALSE)[2,],
+      format(t(A.sd),digits=1, scientific=FALSE)[2,]))
+
+xtable(rbind(format(Sigma.E,digits=1, scientific=FALSE)[1,],
+             format(Sigma.sd,digits=1, scientific=FALSE)[1,],
+             format(Sigma.E,digits=1, scientific=FALSE)[2,],
+             format(Sigma.sd,digits=1, scientific=FALSE)[2,]))
+
+```
+
+```{r Simulate draws}
+Y.h         = array(NA,c(h,N,S))
+
+for (s in 1:S){
+  x.Ti        = Y[(nrow(Y)-h+1):nrow(Y),]
+  x.Ti        = x.Ti[4:1,]
+  for (i in 1:h){
+    x.T         = c(1,as.vector(t(x.Ti)))
+    Y.h[i,,s]   = rmvnorm(1, mean = x.T%*%A.posterior[,,s], sigma=Sigma.posterior[,,s])
+    x.Ti        = rbind(Y.h[i,,s],x.Ti[1:3,])
+  }
+}
+
+```
+
+```{r}
+# Define colors
+mcxs1  = "#05386B"
+mcxs2  = "#379683"
+mcxs3  = "#5CDB95"
+mcxs4  = "#8EE4AF"
+mcxs5  = "#EDF5E1"
+
+mcxs1.rgb   = col2rgb(mcxs1)
+mcxs1.shade1= rgb(mcxs1.rgb[1],mcxs1.rgb[2],mcxs1.rgb[3], alpha=120, maxColorValue=255)
+mcxs2.rgb   = col2rgb(mcxs2)
+mcxs2.shade1= rgb(mcxs2.rgb[1],mcxs2.rgb[2],mcxs2.rgb[3], alpha=120, maxColorValue=255)
+```
+
+```{r Joint predictive density 1 period ahead}
+# Index for Log.of.Real.WPI
+log_wpi_index <- 1
+
+# Variable names excluding Log.of.Real.WPI
+variable_names <- c("Log.of.CPI", "Log.of.PPI", "Log.of.EXPI", "Log.of.IMPI",
+                    "Log.of.CLI", "log.unempl", "log.parti", "log.h.worked",
+                    "Log.of.Real.GDP")
+
+par(mfrow=c(3, 3))  # Adjusted for 10 plots
+
+# Number of bands for kernel density estimation
+bands <- 100
+
+# Iterate over the indices of variable_names
+for (i in seq_along(variable_names)) {
+    # Compute the joint kernel density estimation
+    predictive.one.kernel <- kde2d(x = Y.h[1, 1, ], y = Y.h[1, i + 1, ], n = bands)
+    
+    # Calculate marginal densities for the plot
+    marginal.x <- apply(predictive.one.kernel$z, 1, sum)  
+    marginal.y <- apply(predictive.one.kernel$z, 2, sum)  
+    
+    # Scale marginals to fit the plot's z range
+    marginal.x <- max(predictive.one.kernel$z) * marginal.x / max(marginal.x)
+    marginal.y <- max(predictive.one.kernel$z) * marginal.y / max(marginal.y)
+    
+    # Plot a transparent surface first
+    f1 <- persp3D(x = predictive.one.kernel$x, y = predictive.one.kernel$y, z = predictive.one.kernel$z,
+                  phi = 25, theta = 25,
+                  xlab = variable_names[i], ylab = "Log.of.Real.WPI", zlab = "Predictive Density",
+                  shade = 0, border = NA, ticktype = "detailed", nticks = 2,
+                  cex.lab = 1, col = "white")
+
+    # Add lines for marginal densities
+    # Line for the marginal density of x
+    f1.l1 <- trans3d(x = predictive.one.kernel$x, y = rep(max(predictive.one.kernel$y), length(predictive.one.kernel$x)), z = marginal.x, pmat = f1)
+    lines(f1.l1, lwd = 2, col = mcxs2)
+    
+    # Line for the marginal density of y
+    f1.l2 <- trans3d(x = rep(min(predictive.one.kernel$x), length(predictive.one.kernel$y)), y = predictive.one.kernel$y, z = marginal.y, pmat = f1)
+    lines(f1.l2, lwd = 2, col = mcxs1)
+    
+    # Plot the surface again with less transparency
+    f1 <- persp3D(x = predictive.one.kernel$x, y = predictive.one.kernel$y, z = predictive.one.kernel$z,
+                  shade = 0.5, border = NA, col = mcxs2.shade1, add = TRUE)
+}
+```
+
+```{r Forecast horizons}
+par(mfrow=c(3, 4))  # Adjusted for 10 plots
+
+# Define the viewing angles for the 3D plots
+theta <- 180
+phi <- 15.5
+
+# Iterate over the indices of variable_names
+for (i in seq_along(variable_names)) {
+  # Calculate the forecast density histogram for each time point
+  limits <- range(Y.h[, i + 1, ])
+  point <- apply(Y.h[, i + 1, ], 1, mean)
+  interval <- apply(Y.h[, i + 1, ], 1, hdi, credMass = 0.90)  # hdi function needs to be defined or replaced
+  
+  x <- seq(from = limits[1], to = limits[2], length.out = 100)
+  z <- matrix(NA, h, length(x)-1)
+  for (j in 1:h){
+    z[j, ] <- hist(Y.h[j, i + 1, ], breaks = x, plot = FALSE)$density
+  }
+  x <- hist(Y.h[h, i + 1, ], breaks = x, plot = FALSE)$mids  # Only need to run once
+  z <- t(z)
+  
+  # Plot the 3D surface
+  f <- persp3D(x = x, y = 1:h, z = z, phi = phi, theta = theta, 
+               xlab = paste0("\n", variable_names[i], "[t+h|t]"), 
+               ylab = "h", 
+               zlab = "\nPredictive densities",
+               shade = NA, border = NA, ticktype = "detailed", nticks = 3, 
+               cex.lab = 1, col = NA, plot = FALSE, colorkey = FALSE)
+
+  # Draw the polygon for the HDI
+  polygon3D(x = c(interval[1, ], rev(interval[2, ])), 
+            y = c(1:h, rev(1:h)), 
+            z = rep(0, 2*h), 
+            col = mcxs1.shade1, 
+           NAcol = "white", border = NA, add = TRUE, plot = TRUE)
+  
+  # Add lines for the density
+  for (j in 1:h) {
+    f.l <- trans3d(x = x, y = rep(j, length(x)), z = z[j, ], pmat = f)
+    lines(f.l, lwd = 0.5, col = "black")
+  }
+  
+  # Add line for the mean forecast
+  f.l1 <- trans3d(x = point, y = 1:h, z = rep(0, h), pmat = f)
+  lines(f.l1, lwd = 2, col = mcxs1)
+}  
+
+```
 # References {.unnumbered}
