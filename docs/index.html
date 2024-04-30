@@ -21,40 +21,6 @@ ul.task-list li input[type="checkbox"] {
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
 }
-/* CSS for syntax highlighting */
-pre > code.sourceCode { white-space: pre; position: relative; }
-pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
-pre > code.sourceCode > span:empty { height: 1.2em; }
-.sourceCode { overflow: visible; }
-code.sourceCode > span { color: inherit; text-decoration: inherit; }
-div.sourceCode { margin: 1em 0; }
-pre.sourceCode { margin: 0; }
-@media screen {
-div.sourceCode { overflow: auto; }
-}
-@media print {
-pre > code.sourceCode { white-space: pre-wrap; }
-pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
-}
-pre.numberSource code
-  { counter-reset: source-line 0; }
-pre.numberSource code > span
-  { position: relative; left: -4em; counter-increment: source-line; }
-pre.numberSource code > span > a:first-child::before
-  { content: counter(source-line);
-    position: relative; left: -1em; text-align: right; vertical-align: baseline;
-    border: none; display: inline-block;
-    -webkit-touch-callout: none; -webkit-user-select: none;
-    -khtml-user-select: none; -moz-user-select: none;
-    -ms-user-select: none; user-select: none;
-    padding: 0 4px; width: 4em;
-  }
-pre.numberSource { margin-left: 3em;  padding-left: 4px; }
-div.sourceCode
-  {   }
-@media screen {
-pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
-}
 /* CSS for citations */
 div.csl-bib-body { }
 div.csl-entry {
@@ -175,6 +141,12 @@ div.csl-indent {
   <li><a href="#var-representation" id="toc-var-representation" class="nav-link" data-scroll-target="#var-representation">VAR representation</a></li>
   <li><a href="#baseline-estimation" id="toc-baseline-estimation" class="nav-link" data-scroll-target="#baseline-estimation">Baseline estimation</a></li>
   <li><a href="#minnesota-priors" id="toc-minnesota-priors" class="nav-link" data-scroll-target="#minnesota-priors">Minnesota Priors</a></li>
+  <li><a href="#define-posterior-paramters" id="toc-define-posterior-paramters" class="nav-link" data-scroll-target="#define-posterior-paramters">Define posterior paramters</a></li>
+  <li><a href="#posterior-draws" id="toc-posterior-draws" class="nav-link" data-scroll-target="#posterior-draws">Posterior draws</a></li>
+  <li><a href="#simulate-drwas" id="toc-simulate-drwas" class="nav-link" data-scroll-target="#simulate-drwas">Simulate drwas</a></li>
+  <li><a href="#predictive-density-plots" id="toc-predictive-density-plots" class="nav-link" data-scroll-target="#predictive-density-plots">Predictive density plots</a></li>
+  <li><a href="#forecast-horizons" id="toc-forecast-horizons" class="nav-link" data-scroll-target="#forecast-horizons">Forecast horizons</a></li>
+  <li><a href="#forecast-plots" id="toc-forecast-plots" class="nav-link" data-scroll-target="#forecast-plots">Forecast plots</a></li>
   </ul></li>
   <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references">References</a></li>
   </ul>
@@ -550,33 +522,74 @@ p(\Sigma|Y,X) &amp;= IW_N(\bar{S},\bar{\nu}),
 <section id="minnesota-priors" class="level2">
 <h2 class="anchored" data-anchor-id="minnesota-priors">Minnesota Priors</h2>
 <p>Minnesota prior are calculated as presented in <span class="citation" data-cites="lutkepohl2005new">Lütkepohl (<a href="#ref-lutkepohl2005new" role="doc-biblioref">2005</a>)</span> .</p>
+</section>
+<section id="define-posterior-paramters" class="level2">
+<h2 class="anchored" data-anchor-id="define-posterior-paramters">Define posterior paramters</h2>
+</section>
+<section id="posterior-draws" class="level2">
+<h2 class="anchored" data-anchor-id="posterior-draws">Posterior draws</h2>
+</section>
+<section id="simulate-drwas" class="level2">
+<h2 class="anchored" data-anchor-id="simulate-drwas">Simulate drwas</h2>
+</section>
+<section id="predictive-density-plots" class="level2">
+<h2 class="anchored" data-anchor-id="predictive-density-plots">Predictive density plots</h2>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>priors <span class="ot">&lt;-</span> <span class="cf">function</span>(p, X, Y){</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stopifnot</span>(<span class="fu">is.matrix</span>(Y), <span class="fu">is.matrix</span>(X))  <span class="co">#numeric</span></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stopifnot</span>(<span class="sc">!</span><span class="fu">any</span>(<span class="fu">is.na</span>(Y)), <span class="sc">!</span><span class="fu">any</span>(<span class="fu">is.na</span>(X))) <span class="co">#no NA</span></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>  A.hat <span class="ot">=</span> <span class="fu">solve</span>(<span class="fu">t</span>(X)<span class="sc">%*%</span>X)<span class="sc">%*%</span>(<span class="fu">t</span>(X)<span class="sc">%*%</span>Y)</span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>  Sigma.hat <span class="ot">=</span> <span class="fu">diag</span>(<span class="fu">ncol</span>(Y))</span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>  N <span class="ot">=</span> <span class="fu">ncol</span>(Y)</span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>  <span class="co">#set kapps</span></span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>  kappa<span class="fl">.1</span> <span class="ot">&lt;-</span> <span class="fl">0.02</span><span class="sc">^</span><span class="dv">2</span></span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>  kappa<span class="fl">.2</span> <span class="ot">&lt;-</span><span class="dv">100</span></span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>  K <span class="ot">=</span> <span class="dv">1</span> <span class="sc">+</span> (p<span class="sc">*</span>N)</span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>  A.prior     <span class="ot">=</span> <span class="fu">matrix</span>(<span class="dv">0</span>,<span class="fu">nrow</span>(A.hat),<span class="fu">ncol</span>(A.hat))</span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>  A.prior[<span class="dv">2</span><span class="sc">:</span>(N<span class="sc">+</span><span class="dv">1</span>),] <span class="ot">=</span> <span class="fu">diag</span>(N)</span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>  V.prior     <span class="ot">=</span> <span class="fu">diag</span>(<span class="fu">c</span>(kappa<span class="fl">.2</span>,kappa<span class="fl">.1</span><span class="sc">*</span>((<span class="dv">1</span><span class="sc">:</span>p)<span class="sc">^</span>(<span class="sc">-</span><span class="dv">2</span>))<span class="sc">%x%</span><span class="fu">rep</span>(<span class="dv">1</span>,N)))</span>
-<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>  S.prior     <span class="ot">=</span> <span class="fu">diag</span>(<span class="fu">diag</span>(Sigma.hat))</span>
-<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>  nu.prior    <span class="ot">=</span> N<span class="sc">+</span><span class="dv">1</span></span>
-<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>  priors.list <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">A.prior =</span> A.prior , <span class="at">V.prior=</span>V.prior, <span class="at">S.prior=</span>S.prior, <span class="at">nu.prior=</span>nu.prior)</span>
-<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(priors.list)</span>
-<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a><span class="co">#priors(p, X, Y)</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/Joint predictive density 1 period ahead-1.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/Joint predictive density 1 period ahead-2.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/Joint predictive density 1 period ahead-3.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/Joint predictive density 1 period ahead-4.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/Joint predictive density 1 period ahead-5.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</section>
+<section id="forecast-horizons" class="level2">
+<h2 class="anchored" data-anchor-id="forecast-horizons">Forecast horizons</h2>
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/Forecast horizons-1.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/Forecast horizons-2.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/Forecast horizons-3.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/Forecast horizons-4.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/Forecast horizons-5.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</section>
+<section id="forecast-plots" class="level2">
+<h2 class="anchored" data-anchor-id="forecast-plots">Forecast plots</h2>
+<div class="cell">
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/Plot 2D forecasts-1.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/Plot 2D forecasts-2.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/Plot 2D forecasts-3.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/Plot 2D forecasts-4.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="index_files/figure-html/Plot 2D forecasts-5.png" class="img-fluid" width="672"></p>
+</div>
 </div>
 </section>
 </section>

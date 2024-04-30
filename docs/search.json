@@ -53,7 +53,7 @@
     "href": "index.html#minnesota-priors",
     "title": "Forecasting Australian Real Wages",
     "section": "Minnesota Priors",
-    "text": "Minnesota Priors\nMinnesota prior are calculated as presented in Lütkepohl (2005) .\n\npriors &lt;- function(p, X, Y){\n  \n  stopifnot(is.matrix(Y), is.matrix(X))  #numeric\n  stopifnot(!any(is.na(Y)), !any(is.na(X))) #no NA\n  \n  A.hat = solve(t(X)%*%X)%*%(t(X)%*%Y)\n  Sigma.hat = diag(ncol(Y))\n  N = ncol(Y)\n    \n  #set kapps\n  kappa.1 &lt;- 0.02^2\n  kappa.2 &lt;-100\n  \n  K = 1 + (p*N)\n  \n  A.prior     = matrix(0,nrow(A.hat),ncol(A.hat))\n  A.prior[2:(N+1),] = diag(N)\n  V.prior     = diag(c(kappa.2,kappa.1*((1:p)^(-2))%x%rep(1,N)))\n  S.prior     = diag(diag(Sigma.hat))\n  nu.prior    = N+1\n  \n  priors.list &lt;- list(A.prior = A.prior , V.prior=V.prior, S.prior=S.prior, nu.prior=nu.prior)\n  \n  return(priors.list)\n}\n#priors(p, X, Y)"
+    "text": "Minnesota Priors\nMinnesota prior are calculated as presented in Lütkepohl (2005) ."
   },
   {
     "objectID": "index.html#var-representation",
@@ -61,5 +61,47 @@
     "title": "Forecasting Australian Real Wages",
     "section": "VAR representation",
     "text": "VAR representation\nTo analyze the macroeconomic and financial variables and run forecasts, a Vector autoregression (VAR) model, introduced by Sims (1972) can be applied, which allows for the multivariate framework of several time series. A general VAR model with \\(\\rho\\) lags for \\(t=1,...,T\\) can be stated as:\n\\[\\begin{align}\ny_{t}   &=\\mu_{0}+A_{1}y_{t-1}+...+A_{\\rho}y_{t-\\rho}+\\epsilon_{t}\\\\\n\\epsilon_{t}|Y_{T-1}    &\\sim iid\\left(0_{N},\\Sigma\\right)\n\\end{align}\\]\nWhere \\(y_{t}\\) is a \\(N\\times 1\\) vector of observations at time \\(t\\), \\(\\mu_{0}\\) is a \\(N\\times1\\) vector of constant terms, \\(A_{i}\\) is a \\(N\\times N\\) vector of the autoregressive slope parameters, \\(\\epsilon_{t}\\) is a \\(N \\times 1\\) vector of error terms, \\(Y_{t-1}\\) is the information set and \\(\\Sigma\\) is the \\(N \\times N\\) covariance matrix of the error term."
+  },
+  {
+    "objectID": "index.html#define-posterior-paramters",
+    "href": "index.html#define-posterior-paramters",
+    "title": "Forecasting Australian Real Wages",
+    "section": "Define posterior paramters",
+    "text": "Define posterior paramters"
+  },
+  {
+    "objectID": "index.html#posterior-draws",
+    "href": "index.html#posterior-draws",
+    "title": "Forecasting Australian Real Wages",
+    "section": "Posterior draws",
+    "text": "Posterior draws"
+  },
+  {
+    "objectID": "index.html#simulate-drwas",
+    "href": "index.html#simulate-drwas",
+    "title": "Forecasting Australian Real Wages",
+    "section": "Simulate drwas",
+    "text": "Simulate drwas"
+  },
+  {
+    "objectID": "index.html#predictive-density-plots",
+    "href": "index.html#predictive-density-plots",
+    "title": "Forecasting Australian Real Wages",
+    "section": "Predictive density plots",
+    "text": "Predictive density plots"
+  },
+  {
+    "objectID": "index.html#forecast-horizons",
+    "href": "index.html#forecast-horizons",
+    "title": "Forecasting Australian Real Wages",
+    "section": "Forecast horizons",
+    "text": "Forecast horizons"
+  },
+  {
+    "objectID": "index.html#forecast-plots",
+    "href": "index.html#forecast-plots",
+    "title": "Forecasting Australian Real Wages",
+    "section": "Forecast plots",
+    "text": "Forecast plots"
   }
 ]
