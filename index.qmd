@@ -597,4 +597,26 @@ for (i in seq_along(variable_names)) {
 }  
 
 ```
+
+```{r Plot 2D forecasts}
+for (i in seq_along(variable_names)) {
+    # Compute mean forecast and intervals for the ith variable
+    point.f <- apply(Y.h[, i + 1, ], 1, mean)
+    interval.f <- apply(Y.h[, i + 1, ], 1, hdi, credMass = 0.90)
+    range_val <- range(y[, i + 1], interval.f)
+
+    # Historical and forecast plot for the ith variable
+    plot(1:(length(y[, i + 1]) + h), c(y[, i + 1], point.f), type = "l", ylim = range_val, axes = FALSE, xlab = "", ylab = "", lwd = 2, col = mcxs1)
+    axis(1, c(3, 43, 83, 123, 163, 203, 243, nrow(y), nrow(y) + h), c("1960", "1970", "1980", "1990", "2000", "2010", "2020", "", ""), col = mcxs1)
+    axis(2, c(range_val[1], mean(range_val), range_val[2]), c("", variable_names[i], ""), col = mcxs1)
+    abline(v = nrow(y), col = mcxs1)  # Assumes y contains the historical data up to the last observed point
+
+    # Polygon for the forecast interval
+    polygon(c((length(y[, i + 1]) + h):length(y[, i + 1]), (length(y[, i + 1]) + h):length(y[, i + 1])),
+            c(y[nrow(y), i + 1], interval.f[1, ], rev(interval.f[2, ]), y[nrow(y), i + 1]),
+            col = mcxs1.shade1, border = mcxs1.shade1)
+}
+```
+
+
 # References {.unnumbered}
