@@ -29,7 +29,6 @@ Accurate forecasting of real wages is imperative for policymakers and businesses
 \log Real\:wages = \log Nominal\:wages\:- \log CPI 
 \end{align}
 ```
-
 # Data
 
 Labor data is retrieved from the Australian Bureau of Statistics (ABS) using the **readabs** function and the Reserve Bank of Australia (RBA) using **readrba**.
@@ -97,7 +96,9 @@ log.cpi <- log(subset(read_abs(series_id = "A2325846C"), date >= as.Date(start.p
 log.real.wpi <- log.nom.wpi - log.cpi
 
 # Get dates
-dates <- subset(read_rba_seriesid("GWPIPRIQP"), date >= as.Date(start.period) & date <= as.Date(end.period))$date
+dates <- subset(read_abs(series_id = "A2713851R"), date >= as.Date(start.period) & date <= as.Date(end.period))$date
+dates_yq <- as.yearqtr(dates)
+dates_formatted <- format(dates_yq, "%Y Q%q")
 
 # Get producer prices (PPI)
 log.ppi <- log(subset(read_abs(series_id = "A2314865F"), date >= as.Date(start.period) & date <= as.Date(end.period))$value)
@@ -120,7 +121,8 @@ log.unempl <- read_abs(series_id = "A84423092X") |>
   summarise(value = mean(value, na.rm = TRUE)) |> 
   mutate(log_value = log(value)) |> 
   select(log_value)  |> 
-  rename(log.unempl = log_value)
+  rename(log.unempl = log_value) |>
+  select(log.unempl)
 
 #Log of labor participation
 log.parti <- read_abs(series_id = "A84423093A") |>
@@ -170,7 +172,7 @@ df <- data.frame(
   "Log of Real GDP" = log.real.gdp
 )
 # Display the first 5 rows of the dataframe
-
+var_names <- colnames(df)
 df_display <- data.frame(
   "Date" = as.Date(dates),
   df
@@ -186,7 +188,6 @@ Other indicators like Cost of Living Index, the Import Index and the Producer Pr
 
 ```{r PLOTS, echo=FALSE}
 # Plot data
-var_names <- colnames(df)
 par(mfrow = c(4, 3), mar = c(2, 2, 2, 2))
 
 for (j in 1:ncol(df)) {
@@ -213,8 +214,8 @@ for (j in 1:ncol(df)) {
 
 ### PACF Analysis
 
-The Partial Autocorrelation (PACF) plots for the time series predominantly exhibit significant partial autocorrelations at the first lag for all variables, followed by a rapid convergence to the confidence bounds. 
-This pattern suggests that the data could be well represented by a first order autoregressive model. 
+The Partial Autocorrelation (PACF) plots for the time series predominantly exhibit significant partial autocorrelations at the first lag for all variables, followed by a rapid convergence to the confidence bounds. This pattern suggests that the data could be well represented by a first order autoregressive model.
+
 ```{r PACF plots, echo = FALSE}
 par(mfrow = c(4, 3), mar = c(2, 2, 3, 2))
 for (j in 1:ncol(df)) {
@@ -224,7 +225,8 @@ for (j in 1:ncol(df)) {
 
 ### Augmented Dickey-Fuller test
 
-The ADF test results confirm the non-stationarity observed in the ACF plots for most variables. Specifically, first differences suffices for all variables except the unemployment rate, which is stationary on the 5% level, and the CPI and CLI, which require second-order differencing. 
+The ADF test results confirm the non-stationarity observed in the ACF plots. Specifically, first differences  suffices for all variables except the unemployment rate, which is stationary on the 5% level, and the CPI and CLI, which require second-order differencingto in order to be stationary.
+
 ```{r ADF_table,  message=FALSE, warning=FALSE}
 
 #code  idea from Yobin(2023)
@@ -282,7 +284,18 @@ rmarkdown::paged_table(adf_test_results, options = list(pageLength = 11))
 ```
 
 # The model
+
+```{r  , echo=FALSE,  message=FALSE, warning=FALSE}
+#new libraries
+library(mvtnorm)
+library(plot3D)
+library(MASS)
+library(HDInterval)
+set.seed(123456)
+```
+
 ## VAR representation
+
 To analyze the macroeconomic and financial variables and run forecasts, a Vector autoregression (VAR) model, introduced by @sims1972money can be applied, which allows for the multivariate framework of several time series. A general VAR model with $\rho$ lags for $t=1,...,T$ can be stated as:
 
 ```{=tex}
@@ -297,10 +310,8 @@ Where $y_{t}$ is a $N\times 1$ vector of observations at time $t$, $\mu_{0}$ is 
 
 In order to define the baseline model, additional notation is being introduced following @wozniak2016bayesian.
 
-Let a $K \times 1$ vector with $K=1+kN$ collect all of the data vectors on the RHS of the equation 
-$\mathbf{x}_t = \left(1, y_{t-1}', \ldots, y_{t-k}' \right)$
-and $K\times N$ matrix the intercept term and the autoregressive matrices 
-$\mathbf{A} = \left(\mu, A_1, ... , A_k \right)'$, then the VAR process can be written as 
+Let a $K \times 1$ vector with $K=1+kN$ collect all of the data vectors on the RHS of the equation $\mathbf{x}_t = \left(1, y_{t-1}', \ldots, y_{t-k}' \right)$ and $K\times N$ matrix the intercept term and the autoregressive matrices $\mathbf{A} = \left(\mu, A_1, ... , A_k \right)'$, then the VAR process can be written as
+
 ```{=tex}
 \begin{align}
 y_t' &= x_t'A + \epsilon_t'.
@@ -314,80 +325,9 @@ Y=XA + E\\
 Y|X,A,\Sigma &\sim MN_{T \times N} (XA, \Sigma, I_T).
 \end{align}
 ```
-The likelihood function can be written as
-```{=tex}
-\begin{align}
-L(A,\Sigma|Y,X) &= (2\pi)^{-\frac{TN}{2}} det(\Sigma)^{-\frac{T}{2}}exp(-\frac{1}{2}tr[\Sigma^{-1}(Y-XA)'(Y-XA)]),
-\end{align}
-```
-which can be rewritten as 
-```{=tex}
-\begin{align}
-L(A,\Sigma|Y,X) &\propto det(\Sigma)^{-\frac{T}{2}} exp \left\{-\frac{1}{2} tr \left[ \Sigma^{-1}(A-\hat{A})'X'X(A-\hat{A}) \right] \right\}\\
-&\times exp \left\{-\frac{1}{2} tr \left[\Sigma^{-1}(Y-X \hat{A})'(Y-X \hat{A}) \right] \right\},
-\end{align}
-```
-by expressing the maximum likelihood estimators as:
-```{=tex}
-\begin{align}
-\hat{A} &= (X'X)^{-1}X'Y\\
-\hat{\Sigma} &= \frac{1}{T} (Y-X \hat{A})'(Y-X \hat{A}).
-\end{align}
-```
-The natural conjugate priors for $A$ and $\Sigma$ are assumed to follow a matrix normal and inverse Wishart distribution respectively:     
-```{=tex}
-\begin{align}
-p(A,\Sigma) &= MNIW(\underline{A},\underline{S},\underline{V},\underline{\nu})\\
-A|\Sigma &\sim MN_{K \times N}(\underline{A},\Sigma,\underline{V}) \\
-\Sigma &\sim IW_N(\underline{S},\underline{\nu}),
-\end{align}
-```
-with the priors to be specified as Minnesota priors following @doan1984forecasting
-```{=tex}
-\begin{align}
-\underline{A} &= [0_{N \times 1}, \quad I_N, \quad 0_{N \times (p-1)N}]'\\
-\underline{V} &= diag([\kappa_2, \quad \kappa_1 (p^{-2} \otimes I_N)]).
-\end{align}
-```
 
-The joint posterior distribution is then given by the product of the likelihood and the priors:
-```{=tex}
-\begin{align}
-p(A,\Sigma|Y,X) &\propto \det(\Sigma)^{-\frac{T}{2}} \\
-&\times exp(-\frac{1}{2}tr[\Sigma^{-1}(Y-XA)'(Y-XA)]) \\
-&\times \det(\Sigma)^{-\frac{N+K+\underline{v}+1}{2}} \\
-&\times exp(-\frac{1}{2}tr[\Sigma^{-1}(A-\underline{A})'\underline(V)^{-1}(A-\underline{A})]) \\
-&\times exp(-\frac{1}{2}tr[\Sigma^{-1}\underline{S}]).
-\end{align}
-```
-Combining terms yields the following distirbutions for $A$ and $\Sigma$:
-```{=tex}
-\begin{align}
-p(A|Y,X,\Sigma) &= MN_{K \times N}(\bar{A}, \Sigma, \bar{V}) \\
-p(\Sigma|Y,X) &= IW_N(\bar{S},\bar{\nu}),
-\end{align}
-```
-where paramters $\bar{A}$ , $\bar{V}$, $\bar{S}$ and $\bar{\nu}$ characterise the posterior distribution and are given by 
-```{=tex}
-\begin{align}
-\bar{V} &= (X'X + \underline{V}^{-1})^{-1} \\
-\bar{A} &= \bar{V}(X'Y + \underline{V}^{-1}\underline{A}) \\
-\bar{\nu} &= T + \underline{\nu} \\
-\bar{S} &= \underline{S} + Y'Y + \underline{A}'\underline{V}^{-1}\underline{A} - \bar{A}'\bar{V}^{-1}\bar{A}.
-\end{align}
-```
-
-```{r  , echo=FALSE,  message=FALSE, warning=FALSE}
-#new libraries
-library(mvtnorm)
-library(plot3D)
-library(MASS)
-library(HDInterval)
-set.seed(123456)
-```
-
-```{r Model set-up  , echo=FALSE, results='hide'}
-y = ts(df, frequency=4)
+```{r Model set-up  , echo=TRUE, results='hide'}
+y <- ts(df, start=c(1998, 4), frequency=4)
 N = ncol(y)
 p       = 4
 K       = 1 + p*N
@@ -400,8 +340,16 @@ for (i in 1:p){
 }
 ```
 
-```{r Maximum Likelihood  , echo=FALSE, results='hide'}
-XX = solve(t(X)%*%X)
+The likelihood function is
+
+```{=tex}
+\begin{align}
+L(A,\Sigma|Y,X) &= (2\pi)^{-\frac{TN}{2}} det(\Sigma)^{-\frac{T}{2}}exp(-\frac{1}{2}tr[\Sigma^{-1}(Y-XA)'(Y-XA)]),
+\end{align}
+```
+which can be rewritten as
+
+```{r Maximum Likelihood  , echo=TRUE, results='hide'}
 A.hat       = solve(t(X)%*%X)%*%t(X)%*%Y
 Sigma.hat   = t(Y-X%*%A.hat)%*%(Y-X%*%A.hat)/nrow(Y)
 round(A.hat,3)
@@ -409,11 +357,39 @@ round(Sigma.hat,3)
 round(cov2cor(Sigma.hat),3)
 ```
 
-## Minnesota Priors
+```{=tex}
+\begin{align}
+L(A,\Sigma|Y,X) &\propto det(\Sigma)^{-\frac{T}{2}} exp \left\{-\frac{1}{2} tr \left[ \Sigma^{-1}(A-\hat{A})'X'X(A-\hat{A}) \right] \right\}\\
+&\times exp \left\{-\frac{1}{2} tr \left[\Sigma^{-1}(Y-X \hat{A})'(Y-X \hat{A}) \right] \right\}.
+\end{align}
+```
+The maximum likelihood estimators are represented by:
 
-Minnesota prior are calculated as presented in @lutkepohl2005new .
+```{=tex}
+\begin{align}
+\hat{A} &= (X'X)^{-1}X'Y\\
+\hat{\Sigma} &= \frac{1}{T} (Y-X \hat{A})'(Y-X \hat{A}).
+\end{align}
+```
+The natural conjugate priors for $A$ and $\Sigma$ are assumed to follow a matrix normal and inverse Wishart distribution respectively:
 
-```{r Minnesota priors, results='hide'}
+```{=tex}
+\begin{align}
+p(A,\Sigma) &= MNIW(\underline{A},\underline{S},\underline{V},\underline{\nu})\\
+A|\Sigma &\sim MN_{K \times N}(\underline{A},\Sigma,\underline{V}) \\
+\Sigma &\sim IW_N(\underline{S},\underline{\nu}),
+\end{align}
+```
+with the priors to be specified as Minnesota priors following @doan1984forecasting
+
+```{=tex}
+\begin{align}
+\underline{A} &= [0_{N \times 1}, \quad I_N, \quad 0_{N \times (p-1)N}]'\\
+\underline{V} &= diag([\kappa_2, \quad \kappa_1 (p^{-2} \otimes I_N)]).
+\end{align}
+```
+
+```{r Minnesota priors, echo=TRUE, results='hide'}
 N = ncol(Y)
     
 #set kapps
@@ -429,9 +405,37 @@ nu.prior    = N+1
 
 ```
 
-## Define posterior paramters 
+The joint posterior distribution is then given by the product of the likelihood and the priors:
 
-```{r NIW posterior paramters, results='hide'}
+```{=tex}
+\begin{align}
+p(A,\Sigma|Y,X) &\propto \det(\Sigma)^{-\frac{T}{2}} \\
+&\times exp(-\frac{1}{2}tr[\Sigma^{-1}(Y-XA)'(Y-XA)]) \\
+&\times \det(\Sigma)^{-\frac{N+K+\underline{v}+1}{2}} \\
+&\times exp(-\frac{1}{2}tr[\Sigma^{-1}(A-\underline{A})'\underline(V)^{-1}(A-\underline{A})]) \\
+&\times exp(-\frac{1}{2}tr[\Sigma^{-1}\underline{S}]).
+\end{align}
+```
+Combining terms yields the following distirbutions for $A$ and $\Sigma$:
+
+```{=tex}
+\begin{align}
+p(A|Y,X,\Sigma) &= MN_{K \times N}(\bar{A}, \Sigma, \bar{V}) \\
+p(\Sigma|Y,X) &= IW_N(\bar{S},\bar{\nu}),
+\end{align}
+```
+where paramters $\bar{A}$ , $\bar{V}$, $\bar{S}$ and $\bar{\nu}$ characterise the posterior distribution and are given by
+
+```{=tex}
+\begin{align}
+\bar{V} &= (X'X + \underline{V}^{-1})^{-1} \\
+\bar{A} &= \bar{V}(X'Y + \underline{V}^{-1}\underline{A}) \\
+\bar{\nu} &= T + \underline{\nu} \\
+\bar{S} &= \underline{S} + Y'Y + \underline{A}'\underline{V}^{-1}\underline{A} - \bar{A}'\bar{V}^{-1}\bar{A}.
+\end{align}
+```
+
+```{r NIW posterior paramters, echo=TRUE, results='hide'}
 V.bar.inv   = t(X)%*%X + diag(1/diag(V.prior))
 V.bar       = solve(V.bar.inv)
 A.bar       = V.bar%*%(t(X)%*%Y + diag(1/diag(V.prior))%*%A.prior)
@@ -441,9 +445,9 @@ S.bar.inv   = solve(S.bar)
 
 ```
 
-## Posterior draws
+## Posterior draws using Gibbs sampler
 
-```{r Posterior darws ,  message=FALSE, warning=FALSE, results='hide'}
+```{r Posterior darws , echo=TRUE, message=FALSE, warning=FALSE, results='hide'}
 Sigma.posterior   = rWishart(S, df=nu.bar, Sigma=S.bar.inv)
 Sigma.posterior   = apply(Sigma.posterior,3,solve)
 Sigma.posterior   = array(Sigma.posterior,c(N,N,S))
@@ -463,9 +467,9 @@ Sigma.sd    = apply(Sigma.posterior,1:2,sd)
 
 ```
 
-## Simulate drwas
+## Simulate draws from predictive density
 
-```{r Simulate draws, results='hide'}
+```{r Simulate draws, echo=TRUE, results='hide'}
 Y.h         = array(NA,c(h,N,S))
 
 for (s in 1:S){
@@ -480,7 +484,9 @@ for (s in 1:S){
 
 ```
 
-```{r  , echo=FALSE,  message=FALSE, warning=FALSE, results='hide'}
+## Forecast plots
+
+```{r Colors , echo=FALSE,  message=FALSE, warning=FALSE, results='hide'}
 # Define colors
 mcxs1  = "#05386B"
 mcxs2  = "#379683"
@@ -494,130 +500,41 @@ mcxs2.rgb   = col2rgb(mcxs2)
 mcxs2.shade1= rgb(mcxs2.rgb[1],mcxs2.rgb[2],mcxs2.rgb[3], alpha=120, maxColorValue=255)
 ```
 
-## Predictive density plots
-```{r Joint predictive density 1 period ahead, warning=FALSE}
-# Index for Log.of.Real.WPI
-log_wpi_index <- 1
+```{r}
 
-# Variable names excluding Log.of.Real.WPI
-variable_names <- c("Log.of.CPI", "Log.of.PPI", "Log.of.EXPI", "Log.of.IMPI",
-                    "Log.of.CLI", "log.unempl", "log.parti", "log.h.worked",
-                    "Log.of.Real.GDP")
+x_dates <- format(as.yearqtr(c(dates, seq(tail(dates, 1), by = "quarter", length.out = h + 1)[-1])), "%Y Q%q")
+par(mfrow = c(5, 2), mar = c(2, 2, 1, 1), oma = c(0, 0, 2, 0))
 
-par(mfrow=c(1, 2))  # Adjusted for 10 plots
+for (i in 1:10) {
+    point.f <- apply(Y.h[, i, ], 1, mean)
+    interval.f <- apply(Y.h[, i, ], 1, hdi, credMass = 0.90)
+    combined_data <- c(y[, i], point.f)
+    range_val <- range(combined_data, interval.f)
 
-# Number of bands for kernel density estimation
-bands <- 100
-
-# Iterate over the indices of variable_names
-for (i in seq_along(variable_names)) {
-    # Compute the joint kernel density estimation
-    predictive.one.kernel <- kde2d(x = Y.h[1, 1, ], y = Y.h[1, i + 1, ], n = bands)
+    plot(1:(nrow(y) + h), combined_data, type = "l", ylim = range_val, xlab = "", ylab = "", col = mcxs2, lwd = 2, main = paste("Forecast", var_names[i]), bty = "n", xaxt = "n")
+    axis(1, at = 1:(nrow(y) + h), labels= x_dates, cex.axis = 0.7, tck = 0)
+    abline(v = nrow(y), col = mcxs1)  
     
-    # Calculate marginal densities for the plot
-    marginal.x <- apply(predictive.one.kernel$z, 1, sum)  
-    marginal.y <- apply(predictive.one.kernel$z, 2, sum)  
-    
-    # Scale marginals to fit the plot's z range
-    marginal.x <- max(predictive.one.kernel$z) * marginal.x / max(marginal.x)
-    marginal.y <- max(predictive.one.kernel$z) * marginal.y / max(marginal.y)
-    
-    # Plot a transparent surface first
-    f1 <- persp3D(x = predictive.one.kernel$x, y = predictive.one.kernel$y, z = predictive.one.kernel$z,
-                  phi = 25, theta = 25,
-                  xlab = variable_names[i], ylab = "Log.of.Real.WPI", zlab = "Predictive Density",
-                  shade = 0, border = NA, ticktype = "detailed", nticks = 2,
-                  cex.lab = 1, col = "white")
-
-    # Add lines for marginal densities
-    # Line for the marginal density of x
-    f1.l1 <- trans3d(x = predictive.one.kernel$x, y = rep(max(predictive.one.kernel$y), length(predictive.one.kernel$x)), z = marginal.x, pmat = f1)
-    lines(f1.l1, lwd = 2, col = mcxs2)
-    
-    # Line for the marginal density of y
-    f1.l2 <- trans3d(x = rep(min(predictive.one.kernel$x), length(predictive.one.kernel$y)), y = predictive.one.kernel$y, z = marginal.y, pmat = f1)
-    lines(f1.l2, lwd = 2, col = mcxs1)
-    
-    # Plot the surface again with less transparency
-    f1 <- persp3D(x = predictive.one.kernel$x, y = predictive.one.kernel$y, z = predictive.one.kernel$z,
-                  shade = 0.5, border = NA, col = mcxs2.shade1, add = TRUE)
+    polygon(c((nrow(y)+1):(nrow(y)+h), rev((nrow(y)+1):(nrow(y)+h))),
+            c(interval.f[1, ], rev(interval.f[2, ])), col = mcxs2.shade1, border = mcxs1.shade1)
 }
 ```
 
-## Forecast horizons
 
-```{r Forecast horizons, warning=FALSE}
-par(mfrow=c(1, 2))  # Adjusted for 10 plots
+## Model extension: T-Distributed errors
 
-# Define the viewing angles for the 3D plots
-theta <- 180
-phi <- 15.5
+An interesting specification in our model of forecasting real wages is the introduction of t-Distributed error terms. This specification is particularly notable because the t-distribution, with its heavier tails, may better account for potential outliers and the distributional characteristics of the time series data. This approach aims to enhance the model's robustness and accuracy in capturing the variability in real wage changes.
 
-# Iterate over the indices of variable_names
-for (i in seq_along(variable_names)) {
-  # Calculate the forecast density histogram for each time point
-  limits <- range(Y.h[, i + 1, ])
-  point <- apply(Y.h[, i + 1, ], 1, mean)
-  interval <- apply(Y.h[, i + 1, ], 1, hdi, credMass = 0.90)  # hdi function needs to be defined or replaced
-  
-  x <- seq(from = limits[1], to = limits[2], length.out = 100)
-  z <- matrix(NA, h, length(x)-1)
-  for (j in 1:h){
-    z[j, ] <- hist(Y.h[j, i + 1, ], breaks = x, plot = FALSE)$density
-  }
-  x <- hist(Y.h[h, i + 1, ], breaks = x, plot = FALSE)$mids  # Only need to run once
-  z <- t(z)
-  
-  # Plot the 3D surface
-  f <- persp3D(x = x, y = 1:h, z = z, phi = phi, theta = theta, 
-               xlab = paste0("\n", variable_names[i], "[t+h|t]"), 
-               ylab = "h", 
-               zlab = "\nPredictive densities",
-               shade = NA, border = NA, ticktype = "detailed", nticks = 3, 
-               cex.lab = 1, col = NA, plot = FALSE, colorkey = FALSE)
+Following
 
-  # Draw the polygon for the HDI
-  polygon3D(x = c(interval[1, ], rev(interval[2, ])), 
-            y = c(1:h, rev(1:h)), 
-            z = rep(0, 2*h), 
-            col = mcxs1.shade1, 
-           NAcol = "white", border = NA, add = TRUE, plot = TRUE)
-  
-  # Add lines for the density
-  for (j in 1:h) {
-    f.l <- trans3d(x = x, y = rep(j, length(x)), z = z[j, ], pmat = f)
-    lines(f.l, lwd = 0.5, col = "black")
-  }
-  
-  # Add line for the mean forecast
-  f.l1 <- trans3d(x = point, y = 1:h, z = rep(0, h), pmat = f)
-  lines(f.l1, lwd = 2, col = mcxs1)
-}  
-
+```{=tex}
+\begin{align}
+vec(U) & (0, \Sigma \otimes \Omega)
+\end{align}
 ```
 
-## Forecast plots
+If $\Sigma=diag(\lambda_1,...,\lambda_t)$
 
-```{r Plot 2D forecasts}
-par(mfrow=c(1, 2))
-for (i in seq_along(variable_names)) {
-    # Compute mean forecast and intervals for the ith variable
-    point.f <- apply(Y.h[, i + 1, ], 1, mean)
-    interval.f <- apply(Y.h[, i + 1, ], 1, hdi, credMass = 0.90)
-    range_val <- range(y[, i + 1], interval.f)
-
-    # Historical and forecast plot for the ith variable
-    plot(1:(length(y[, i + 1]) + h), c(y[, i + 1], point.f), type = "l", ylim = range_val, axes = FALSE, xlab = "", ylab = "", lwd = 2, col = mcxs1)
-    axis(1, c(3, 43, 83, 123, 163, 203, 243, nrow(y), nrow(y) + h), c("1960", "1970", "1980", "1990", "2000", "2010", "2020", "", ""), col = mcxs1)
-    axis(2, c(range_val[1], mean(range_val), range_val[2]), c("", variable_names[i], ""), col = mcxs1)
-    abline(v = nrow(y), col = mcxs1)  # Assumes y contains the historical data up to the last observed point
-
-    # Polygon for the forecast interval
-    polygon(c((length(y[, i + 1]) + h):length(y[, i + 1]), (length(y[, i + 1]) + h):length(y[, i + 1])),
-            c(y[nrow(y), i + 1], interval.f[1, ], rev(interval.f[2, ]), y[nrow(y), i + 1]),
-            col = mcxs1.shade1, border = mcxs1.shade1)
-}
-```
 
 
 # References {.unnumbered}
