@@ -39,7 +39,7 @@
     "href": "index.html#preliminary-data-analysis",
     "title": "Forecasting Australian Real Wages",
     "section": "Preliminary data analysis",
-    "text": "Preliminary data analysis\n\nACF Analysis\nThe Autocorrelation Function (ACF) plots demonstrate a decay in correlation coefficients for all time series, with the memories of Import Index and Unemployment dropping slightly faster than the rest, indicating the presence of substantial memory. The initial lags exhibit significant autocorrelation, signifying non-stationary behavior. This persistence in the time series necessitates statistical differencing to ensure stationarity.\n\n\n\n\n\n\n\nPACF Analysis\nThe Partial Autocorrelation (PACF) plots for the time series predominantly exhibit significant partial autocorrelations at the first lag for all variables, followed by a rapid convergence to the confidence bounds. This pattern suggests that the data could be well represented by a first order autoregressive model.\n\n\n\n\n\n\n\nAugmented Dickey-Fuller test\nThe ADF test results confirm the non-stationarity observed in the ACF plots for most variables. Specifically, first differences suffices for all variables except the unemployment rate, which is stationary on the 5% level, and the CPI and CLI, which require second-order differencing."
+    "text": "Preliminary data analysis\n\nACF Analysis\nThe Autocorrelation Function (ACF) plots demonstrate a decay in correlation coefficients for all time series, with the memories of Import Index and Unemployment dropping slightly faster than the rest, indicating the presence of substantial memory. The initial lags exhibit significant autocorrelation, signifying non-stationary behavior. This persistence in the time series necessitates statistical differencing to ensure stationarity.\n\n\n\n\n\n\n\nPACF Analysis\nThe Partial Autocorrelation (PACF) plots for the time series predominantly exhibit significant partial autocorrelations at the first lag for all variables, followed by a rapid convergence to the confidence bounds. This pattern suggests that the data could be well represented by a first order autoregressive model.\n\n\n\n\n\n\n\nAugmented Dickey-Fuller test\nThe ADF test results confirm the non-stationarity observed in the ACF plots. Specifically, first differences suffices for all variables except the unemployment rate, which is stationary on the 5% level, and the CPI and CLI, which require second-order differencingto in order to be stationary."
   },
   {
     "objectID": "index.html#baseline-estimation",
@@ -109,7 +109,7 @@
     "href": "index.html#model-extension-t-distributed-errors",
     "title": "Forecasting Australian Real Wages",
     "section": "Model extension: T-Distributed errors",
-    "text": "Model extension: T-Distributed errors\nAn interesting specification in our model of forecasting real wages is the introduction of t-Distributed error terms. This specification is particularly notable because the t-distribution, with its heavier tails, may better account for potential outliers and the distributional characteristics of the time series data. This approach aims to enhance the model’s robustness and accuracy in capturing the variability in real wage changes.\n\\[\\begin{align}\nvec(U) & (0, \\Sigma \\otimes \\Omega)\n\\end{align}\\]"
+    "text": "Model extension: T-Distributed errors\nAn interesting specification in our model of forecasting real wages is the introduction of t-Distributed error terms. This specification is particularly notable because the t-distribution, with its heavier tails, may better account for potential outliers and the distributional characteristics of the time series data. This approach aims to enhance the model’s robustness and accuracy in capturing the variability in real wage changes.\nFollowing Chan (2020), the general Covariance structure is\n\\[\\begin{align}\nvec(U) &\\sim (0, \\Sigma \\otimes \\Omega)\n\\end{align}\\]\nwhere \\(\\Omega\\) is a \\(T \\times T\\) covariance matrix.\nIf \\(\\Sigma=diag(\\lambda_1,...,\\lambda_t)\\) and each"
   },
   {
     "objectID": "index.html#posterior-draws-using-gibbs-sampler",
@@ -123,6 +123,6 @@
     "href": "index.html#simulate-draws-from-predictive-density",
     "title": "Forecasting Australian Real Wages",
     "section": "Simulate draws from predictive density",
-    "text": "Simulate draws from predictive density"
+    "text": "Simulate draws from predictive density\n\nY.h         = array(NA,c(h,N,S))\n\nfor (s in 1:S){\n  x.Ti        = Y[(nrow(Y)-h+1):nrow(Y),]\n  x.Ti        = x.Ti[4:1,]\n  for (i in 1:h){\n    x.T         = c(1,as.vector(t(x.Ti)))\n    Y.h[i,,s]   = rmvnorm(1, mean = x.T%*%A.posterior[,,s], sigma=Sigma.posterior[,,s])\n    x.Ti        = rbind(Y.h[i,,s],x.Ti[1:3,])\n  }\n}"
   }
 ]

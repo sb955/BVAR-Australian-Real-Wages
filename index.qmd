@@ -525,15 +525,17 @@ for (i in 1:10) {
 
 An interesting specification in our model of forecasting real wages is the introduction of t-Distributed error terms. This specification is particularly notable because the t-distribution, with its heavier tails, may better account for potential outliers and the distributional characteristics of the time series data. This approach aims to enhance the model's robustness and accuracy in capturing the variability in real wage changes.
 
-Following
+Following @chan2020large, the general Covariance structure is
 
 ```{=tex}
 \begin{align}
-vec(U) & (0, \Sigma \otimes \Omega)
+vec(U) &\sim (0, \Sigma \otimes \Omega)
 \end{align}
 ```
+where $\Omega$ is a $T \times T$ covariance matrix.
 
 If $\Sigma=diag(\lambda_1,...,\lambda_t)$
+and each 
 
 
 
