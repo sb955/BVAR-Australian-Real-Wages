@@ -685,6 +685,8 @@ for(s in 1:S){
   A.posterior.draws[,,s] = matrix(mvtnorm::rmvnorm(1, mean=as.vector(A.bar.ext), sigma = Sigma.posterior.draws[,,s] %x% V.bar.ext), ncol=N)
   
   U_s <- Y.bv - X.bv %*% A.posterior.draws[,,s]
+  
+  #thanks to Yifang for nesting this out
   for (x in 1:t){
     lambda.s.posterior[,s] = lambda.nu.prior + t((U_s)[x,])%*%Sigma.posterior.draws[,,s]%*%(U_s)[x,]
   }
@@ -704,6 +706,12 @@ round(apply(Sigma.posterior.draws[,,s], 1:2, mean),2) * round(mean(lambda.poster
 round(mean(lambda.posterior.draws[,s]),2)
 ```
 One can observe, that the means represent exactly the expected values, whereas the variances lie a bit further apart from 1. Lambda 
+
+####Further research
+
+Running the code with 100 samples is already very computational intensive. I will be necessary to apply tools by @@chan2020large to reduce computational intensity. 
+
+Sammpling $/nu$ can also be of further interest, instead of using a fixed value. 
 
 ### Real Wage data forecasts
 
