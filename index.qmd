@@ -708,7 +708,7 @@ round(mean(lambda.posterior.draws[,s]),2)
 One can observe, that the means represent exactly the expected values, whereas the variances lie a bit further apart from 1. Lambda 
 
 
-####Include $nu$ sampling
+####Include $\nu$ sampling
 
 ```{r echo=FALSE, reults='hide'}
 #code used from Chan(Large Bayesian Vars)
@@ -763,7 +763,7 @@ for(s in 1:S){
   
   Omega.posterior.draws[,,s+1] = diag(lambda.posterior.draws[,s])
   
-  
+  #nu sampling
   binary <- 0
   sum1 <- sum(log(lambda.posterior.draws[,s]))
   sum2 <- sum(1/lambda.posterior.draws[,s])
@@ -814,6 +814,7 @@ round(mean(nu.draws[s]),2)
 
 ```
 
+Mean of $\nu$ settles around 4. Results vary a lot when adjusting the prior of $\nu$. 
 
 
 
