@@ -77,6 +77,20 @@ library(forecast)
 library(tseries)
 ```
 
+```{r Colors , echo=FALSE,  message=FALSE, warning=FALSE, results='hide'}
+# Define colors
+mcxs1  = "#05386B"
+mcxs2  = "#379683"
+mcxs3  = "#5CDB95"
+mcxs4  = "#8EE4AF"
+mcxs5  = "#EDF5E1"
+
+mcxs1.rgb   = col2rgb(mcxs1)
+mcxs1.shade1= rgb(mcxs1.rgb[1],mcxs1.rgb[2],mcxs1.rgb[3], alpha=120, maxColorValue=255)
+mcxs2.rgb   = col2rgb(mcxs2)
+mcxs2.shade1= rgb(mcxs2.rgb[1],mcxs2.rgb[2],mcxs2.rgb[3], alpha=120, maxColorValue=255)
+```
+
 ```{r data extraction, message=FALSE, warning=FALSE}
 
 #define periods
@@ -194,7 +208,7 @@ for (j in 1:ncol(df)) {
   plot(x = dates, y = df[, j], type = 'l',
        main = var_names[j], ylab = "", xlab = "",
        lwd = 2.5,
-       col='blue',
+       col=mcxs2,
        ylim = c(min(df[, j], na.rm = TRUE), max(df[, j], na.rm = TRUE)))
 }
 ```
@@ -283,7 +297,7 @@ adf_test_results <- perform_adf_tests(df)
 rmarkdown::paged_table(adf_test_results, options = list(pageLength = 11))
 ```
 
-# The model
+# The baseline model
 
 ```{r  , echo=FALSE,  message=FALSE, warning=FALSE}
 #new libraries
@@ -291,10 +305,22 @@ library(mvtnorm)
 library(plot3D)
 library(MASS)
 library(HDInterval)
-set.seed(123456)
+library(MCMCpack)
 ```
 
-## VAR representation
+As an easy introduction, a bivariat random walk model will serve as a baseline model to apply the theorie.
+
+```{r}
+set.seed(9999)
+rw_data = data.frame(matrix(nrow=100, ncol=2))
+rw_data[,1] = cumsum(rnorm(100,0,1))
+rw_data[,2] = cumsum(rnorm(100,0,1))
+plot(rw_data[,1], type='l', ylim=c(min(rw_data), max(rw_data)), col=mcxs1, ylab='', xlab='', main='Bivariate Random Walk')
+lines(rw_data[,2], col=mcxs2, ylab='', xlab='')
+```
+
+
+### VAR representation
 
 To analyze the macroeconomic and financial variables and run forecasts, a Vector autoregression (VAR) model, introduced by @sims1972money can be applied, which allows for the multivariate framework of several time series. A general VAR model with $\rho$ lags for $t=1,...,T$ can be stated as:
 
@@ -306,7 +332,7 @@ y_{t}   &=\mu_{0}+A_{1}y_{t-1}+...+A_{\rho}y_{t-\rho}+\epsilon_{t}\\
 ```
 Where $y_{t}$ is a $N\times 1$ vector of observations at time $t$, $\mu_{0}$ is a $N\times1$ vector of constant terms, $A_{i}$ is a $N\times N$ vector of the autoregressive slope parameters, $\epsilon_{t}$ is a $N \times 1$ vector of error terms, $Y_{t-1}$ is the information set and $\Sigma$ is the $N \times N$ covariance matrix of the error term.
 
-## Baseline estimation
+### Baseline estimation
 
 In order to define the baseline model, additional notation is being introduced following @wozniak2016bayesian.
 
@@ -326,21 +352,22 @@ Y|X,A,\Sigma &\sim MN_{T \times N} (XA, \Sigma, I_T).
 \end{align}
 ```
 
-```{r Model set-up  , echo=TRUE, results='hide'}
-y <- ts(df, start=c(1998, 4), frequency=4)
-N = ncol(y)
-p       = 4
+
+```{r Base model set-up  , echo=TRUE, results='hide'}
+y.bv <- ts(rw_data,  frequency=1)
+N = ncol(y.bv)
+p       = 1
 K       = 1 + p*N
 S       = 5000
 h       = 8
-Y       = ts(y[(p+1):nrow(y),])
-X       = matrix(1,nrow(Y),1)
+Y.bv       = ts(y.bv[(p+1):nrow(y.bv),])
+X.bv      = matrix(1,nrow(Y.bv),1)
 for (i in 1:p){
-  X     = cbind(X,y[(p+1):nrow(y)-i,])
+  X.bv     = cbind(X.bv,y.bv[(p+1):nrow(y.bv)-i,])
 }
 ```
 
-The likelihood function is
+The models likelihood function is
 
 ```{=tex}
 \begin{align}
@@ -348,14 +375,6 @@ L(A,\Sigma|Y,X) &= (2\pi)^{-\frac{TN}{2}} det(\Sigma)^{-\frac{T}{2}}exp(-\frac{1
 \end{align}
 ```
 which can be rewritten as
-
-```{r Maximum Likelihood  , echo=TRUE, results='hide'}
-A.hat       = solve(t(X)%*%X)%*%t(X)%*%Y
-Sigma.hat   = t(Y-X%*%A.hat)%*%(Y-X%*%A.hat)/nrow(Y)
-round(A.hat,3)
-round(Sigma.hat,3)
-round(cov2cor(Sigma.hat),3)
-```
 
 ```{=tex}
 \begin{align}
@@ -371,6 +390,15 @@ The maximum likelihood estimators are represented by:
 \hat{\Sigma} &= \frac{1}{T} (Y-X \hat{A})'(Y-X \hat{A}).
 \end{align}
 ```
+
+```{r Maximum Likelihood  , echo=TRUE}
+A.hat       = solve(t(X.bv)%*%X.bv)%*%t(X.bv)%*%Y.bv
+Sigma.hat   = t(Y.bv-X.bv%*%A.hat)%*%(Y.bv-X.bv%*%A.hat)/nrow(Y.bv)
+round(A.hat,3)
+round(Sigma.hat,3)
+#round(cov2cor(Sigma.hat),3)
+```
+
 The natural conjugate priors for $A$ and $\Sigma$ are assumed to follow a matrix normal and inverse Wishart distribution respectively:
 
 ```{=tex}
@@ -389,8 +417,8 @@ with the priors to be specified as Minnesota priors following @doan1984forecasti
 \end{align}
 ```
 
-```{r Minnesota priors, echo=TRUE, results='hide'}
-N = ncol(Y)
+```{r Minnesota priors, echo=TRUE}
+N = ncol(Y.bv)
     
 #set kapps
 kappa.1 <- 0.02^2
@@ -403,6 +431,10 @@ V.prior     = diag(c(kappa.2,kappa.1*((1:p)^(-2))%x%rep(1,N)))
 S.prior     = diag(diag(Sigma.hat))
 nu.prior    = N+1
 
+round(A.prior,3)
+round(V.prior,3)
+round(S.prior,3)
+round(nu.prior,3)
 ```
 
 The joint posterior distribution is then given by the product of the likelihood and the priors:
@@ -435,17 +467,21 @@ where paramters $\bar{A}$ , $\bar{V}$, $\bar{S}$ and $\bar{\nu}$ characterise th
 \end{align}
 ```
 
-```{r NIW posterior paramters, echo=TRUE, results='hide'}
-V.bar.inv   = t(X)%*%X + diag(1/diag(V.prior))
+```{r NIW posterior paramters, echo=TRUE}
+V.bar.inv   = t(X.bv)%*%X.bv + diag(1/diag(V.prior))
 V.bar       = solve(V.bar.inv)
-A.bar       = V.bar%*%(t(X)%*%Y + diag(1/diag(V.prior))%*%A.prior)
-nu.bar      = nrow(Y) + nu.prior
-S.bar       = S.prior + t(Y)%*%Y + t(A.prior)%*%diag(1/diag(V.prior))%*%A.prior - t(A.bar)%*%V.bar.inv%*%A.bar
+A.bar       = V.bar%*%(t(X.bv)%*%Y.bv + diag(1/diag(V.prior))%*%A.prior)
+nu.bar      = nrow(Y.bv) + nu.prior
+S.bar       = S.prior + t(Y.bv)%*%Y.bv + t(A.prior)%*%diag(1/diag(V.prior))%*%A.prior - t(A.bar)%*%V.bar.inv%*%A.bar
 S.bar.inv   = solve(S.bar)
 
+#round(A.bar,3)
+#round(V.bar,3)
+#round(S.bar,3)
+#round(nu.bar,3)
 ```
 
-## Posterior draws using Gibbs sampler
+### Posterior draws and Gibbs sampler 
 
 ```{r Posterior darws , echo=TRUE, message=FALSE, warning=FALSE, results='hide'}
 Sigma.posterior   = rWishart(S, df=nu.bar, Sigma=S.bar.inv)
@@ -457,7 +493,7 @@ for (s in 1:S){
   A.posterior[,,s]= A.bar + L%*%A.posterior[,,s]%*%chol(Sigma.posterior[,,s])
 }
 
-round(apply(A.posterior,1:2,mean),3)
+#round(apply(A.posterior,1:2,mean),3)
 
 # report posterior means and sd of parameters
 A.E         = apply(A.posterior,1:2,mean)
@@ -465,11 +501,261 @@ A.sd        = apply(A.posterior,1:2,sd)
 Sigma.E     = apply(Sigma.posterior,1:2,mean)
 Sigma.sd    = apply(Sigma.posterior,1:2,sd)
 
+round(A.E, 3)
 ```
 
-## Simulate draws from predictive density
+```{r echo=TRUE}
+round(Sigma.E, 3)
+```
 
-```{r Simulate draws, echo=TRUE, results='hide'}
+The estimated parameters are close to the expected values of 1 for a 1-period memory of a random process. 
+
+# Model extension: T-Distributed errors
+
+An interesting specification in our model of forecasting real wages is the introduction of t-Distributed error terms. This specification is particularly notable because the t-distribution, with its heavier tails, may better account for potential outliers and the distributional characteristics of the time series data. This approach aims to enhance the model's robustness and accuracy in capturing the variability in real wage changes.
+
+Following @chan2020large, the general Covariance structure is
+
+```{=tex}
+\begin{align}
+vec(U) &\sim (0, \Sigma \otimes \Omega)
+\end{align}
+```
+where $\Omega$ is a $T \times T$ covariance matrix. 
+
+If $\Sigma=diag(\lambda_1,...,\lambda_t)$ and each $\lambda_t \mid \nu \sim \operatorname{IG}(\nu, s)$,
+then $U$ has a multivariate t-distribution. 
+
+The likelihood is now given by
+```{=tex}
+\begin{align}
+p(Y|A,\Sigma, \Omega) &= (2\pi)^{-\frac{TN}{2}} \det(\Omega)^{-\frac{T}{2}} det(\Sigma)^{-\frac{T}{2}} exp \left\{-\frac{1}{2} tr \left[ \Sigma^{-1}(A-\hat{A})'X'X(A-\hat{A}) \right] \right\}\\
+&\times exp \left\{-\frac{1}{2} tr \left[\Sigma^{-1}(Y-X \hat{A})'(Y-X \hat{A}) \right] \right\}.
+\end{align}
+```
+
+In this framework, $A$ and $\Sigma$ will follow a normal-inverse-Wishart prior:
+
+```{=tex}
+\begin{align}
+\Sigma \sim \operatorname{IW}(\underline{s}, \underline{v}), \quad (\operatorname{vec}(A) \mid \Sigma) \sim \mathcal{N}(\operatorname{vec}(\underline{A}), \Sigma \otimes \underline{V})
+\end{align}
+```
+
+with joint density
+
+```{=tex}
+\begin{align}
+p(A, \Sigma) &= \det(\Sigma)^{-\frac{\nu +N+K}{2}} \times exp\{-\frac{1}{2} tr[\Sigma^{-1}\underline{s}]\}  \\
+&\times exp\{-\frac{1}{2}tr[\Sigma^{-1}(A-\underline{A})'\underline{V}^{-1}(A-\underline{A})]\}
+\end{align}
+```
+
+The kernel of the joint posterior as our product of Likelihood and joint density is then expressed as
+```{=tex}
+\begin{align}
+p(A,\Sigma|Y, \Omega) &\propto \det(\Sigma)^{-\frac{T}{2}} \times \det(\Omega)^{-\frac{N}{2}} \\
+&\times exp\{-\frac{1}{2}tr[\Sigma^{-1}(Y-XA)' \Omega^{-1} (Y-XA)]\} \\
+&\times \det(\Sigma)^{-\frac{N+K+\underline{v}+1}{2}} \times \det(\Sigma)^{-\frac{\nu +N+K}{2}}\\ 
+&\times exp\{-\frac{1}{2}tr[\Sigma^{-1}\underline{s}]\}
+\end{align}
+```
+After rearranging terms, the Kernel of the posterior distribution can be obtained as
+
+```{=tex}
+\begin{align}
+&= \det(\Sigma)^{-\frac{N+K+\bar{v}+1}{2}} \times \det(\Omega)^{-\frac{N}{2}}\\
+&\times exp\{-\frac{1}{2} tr[\Sigma^{-1}(A-\bar{A})'\bar{V}^{-1}(A-\bar{A})]\}\\
+&\times exp\{-\frac{1}{2}tr[\Sigma^{-1}\bar{s}]\},
+\end{align}
+```
+
+which follows a multinomial-normal-inverse-wishart distribution:
+
+```{=tex}
+\begin{align}
+p(A, \Sigma|Y,X) &\sim \operatorname{MNIW}(\bar{A}, \bar{V}, \bar{s}, \bar{v}).
+\end{align}
+```
+
+The posterior parameters are then given as follows:
+
+```{=tex}
+\begin{align}
+\bar{V} &= (X'\Omega^{-1}X + \underline{V}^{-1})^{-1} \\
+\bar{A} &= \bar{V}(X'\Omega^{-1}Y + \underline{V}^{-1}\underline{A}) \\
+\bar{\nu} &= T + \underline{\nu} \\
+\bar{S} &= \underline{S} + Y'\Omega^{-1}Y + \underline{A}'\underline{V}^{-1}\underline{A} - \bar{A}'\bar{V}^{-1}\bar{A}.
+\end{align}
+```
+
+### Distribution of $\lambda_t$
+
+The likelihood defines as
+```{=tex}
+\begin{align}
+L(A, \Sigma, \lambda | Y, X) = \lambda_t^{-\frac{N}{2}} \times \exp\left\{-\frac{1}{2} \frac{1}{\lambda_t} \epsilon_t' \Sigma^{-1} \epsilon_t \right\}.
+\end{align}
+```
+Hence, $\lambda \sim \operatorname{IG2}(\nu, \nu)$ defined as
+```{=tex}
+\begin{align}
+p(\lambda_t|\nu) &= \lambda_t^{ -\frac{N+ \nu +2}{2} } \times exp\{-\frac{1}{2} \frac{1}{\lambda_t} \nu\}.
+\end{align}
+```
+The joint posterior now derives in the common procedure
+```{=tex}
+\begin{align}
+p(\lambda_t|Y,X,A,\Sigma) &\propto L(A,\Sigma,\lambda|Y,X) \times p(\lambda_t|\nu)\\
+&= \lambda_t^{-\frac{N+ \nu +2}{2}} \times exp\{-\frac{1}{2} \frac{1}{\lambda_t}(\nu + \epsilon_t' \Sigma^{-1} \epsilon_t),
+\end{align}
+```
+with $\epsilon_t = (y_t-x_t'A)$.
+
+The kernel of the joint posterior follows an inverse gamma 2 distribution.
+```{=tex}
+\begin{align}
+p(\lambda_t|Y,X,A,\Sigma) &\sim \operatorname{IG2}(N+\nu, \nu+\epsilon_t'\Sigma^{-1}\epsilon_t)
+\end{align}
+```
+
+```{r echo=TRUE}
+set.seed(9999)
+rw_data = data.frame(matrix(nrow=100, ncol=2))
+rw_data[,1] = cumsum(rnorm(100,0,1))
+rw_data[,2] = cumsum(rnorm(100,0,1))
+#plot(rw_data[,1], type='l', ylim=c(min(rw_data), max(rw_data)), col=mcxs1, ylab='', xlab='', main='Bivariate Random Walk')
+#lines(rw_data[,2], col=mcxs, ylab='', xlab='')
+
+
+y.bv <- ts(rw_data,  frequency=1)
+N = ncol(y.bv)
+p       = 1
+S       = 100
+h       = 8
+Y.bv       = ts(y.bv[(p+1):nrow(y.bv),])
+X.bv      = matrix(1,nrow(Y.bv),1)
+for (i in 1:p){
+  X.bv     = cbind(X.bv,y.bv[(p+1):nrow(y.bv)-i,])
+}
+
+A.hat       = solve(t(X.bv)%*%X.bv)%*%t(X.bv)%*%Y.bv
+Sigma.hat   = t(Y.bv-X.bv%*%A.hat)%*%(Y.bv-X.bv%*%A.hat)/nrow(Y.bv)
+
+t <- NROW(Y.bv)
+kappa.1 <- 0.02^2
+kappa.2 <-100
+K = 1 + (p*N)
+
+A.prior     = matrix(0, K , N)
+A.prior[2:(N+1),] = diag(N)
+V.prior     = diag(c(kappa.2,kappa.1*((1:p)^(-2))%x%rep(1,N)))
+S.prior     = diag(diag(Sigma.hat))
+nu.prior    = N+1
+lambda.nu.prior =5
+
+#initialize chain
+lambda.init = rinvgamma(t, lambda.nu.prior/2, lambda.nu.prior/2)
+omega.init = diag(lambda.init)
+omega.init.inv = solve(omega.init)
+
+
+Sigma.posterior.draws <- array(dim = c(N, N, S))
+A.posterior.draws <- array(dim = c(K, N, S))
+Omega.posterior.draws <- array(dim=c(t,t,S+1))
+Omega.posterior.draws[,,1] <- omega.init
+
+#store_nu <- numeric(S)
+lambda.posterior.draws = array(NA,c(t,S))
+lambda.s.posterior = array(NA,c(t,S))
+
+for(s in 1:S){
+  Omega.inv_s     = solve(Omega.posterior.draws[,,s])
+  
+  V.bar.ext       = solve(t(X.bv)%*%Omega.inv_s%*%X.bv + solve(V.prior))
+  A.bar.ext       = V.bar.ext%*%(t(X.bv)%*%Omega.inv_s%*%Y.bv + solve(V.prior)%*%A.prior)
+  nu.bar.ext      = t + nu.prior
+  S.bar.ext       = S.prior + t(Y.bv)%*%Omega.inv_s%*%Y.bv + t(A.prior)%*%solve(V.prior)%*%A.prior - t(A.bar.ext)%*%solve(V.bar.ext)%*%A.bar.ext
+  S.bar.ext       = (S.bar.ext %*% t(S.bar.ext))/2
+  #S.bar.ext.inv   = solve(S.bar.ext)
+  #L               = t(chol(V.bar.ext.inv))
+  
+  Sigma.posterior.draws[,,s] = rWishart(1, nu.bar.ext, solve(S.bar.ext))[,,1]  #solve(S.bar.ext)??
+  Sigma.posterior.draws[,,s] = solve(Sigma.posterior.draws[,,s])
+  A.posterior.draws[,,s] = matrix(mvtnorm::rmvnorm(1, mean=as.vector(A.bar.ext), sigma = Sigma.posterior.draws[,,s] %x% V.bar.ext), ncol=N)
+  
+  U_s <- Y.bv - X.bv %*% A.posterior.draws[,,s]
+  for (x in 1:t){
+    lambda.s.posterior[,s] = lambda.nu.prior + t((U_s)[x,])%*%Sigma.posterior.draws[,,s]%*%(U_s)[x,]
+  }
+  
+  lambda.v.posterior = N + lambda.nu.prior
+  
+  for (x in 1:t){
+    lambda.posterior.draws[x,s] = rinvgamma(1,lambda.v.posterior/2, lambda.s.posterior[x,s]/2)
+  }
+  
+  Omega.posterior.draws[,,s+1] = diag(lambda.posterior.draws[,s])
+} 
+  
+
+round(apply(A.posterior.draws[,,s], 1:2, mean),2)
+round(apply(Sigma.posterior.draws[,,s], 1:2, mean),2) * round(mean(lambda.posterior.draws[,51:100]),2)
+round(mean(lambda.posterior.draws[,s]),2)
+```
+One can observe, that the means represent exactly the expected values, whereas the variances lie a bit further apart from 1. Lambda 
+
+### Real Wage data forecasts
+
+```{r Model set-up  , echo=FALSE, results='hide'}
+y <- ts(df, start=c(1998, 4), frequency=4)
+N = ncol(y)
+p       = 4
+K       = 1 + p*N
+S       = 5000
+h       = 8
+Y       = ts(y[(p+1):nrow(y),])
+X       = matrix(1,nrow(Y),1)
+for (i in 1:p){
+  X     = cbind(X,y[(p+1):nrow(y)-i,])
+}
+
+A.hat       = solve(t(X)%*%X)%*%t(X)%*%Y
+Sigma.hat   = t(Y-X%*%A.hat)%*%(Y-X%*%A.hat)/nrow(Y)
+round(A.hat,3)
+round(Sigma.hat,3)
+round(cov2cor(Sigma.hat),3)
+N = ncol(Y)
+#set kapps
+kappa.1 <- 0.02^2
+kappa.2 <-100
+K = 1 + (p*N)
+
+A.prior     = matrix(0,nrow(A.hat),ncol(A.hat))
+A.prior[2:(N+1),] = diag(N)
+V.prior     = diag(c(kappa.2,kappa.1*((1:p)^(-2))%x%rep(1,N)))
+S.prior     = diag(diag(Sigma.hat))
+nu.prior    = N+1
+
+# normal-inverse Wishart posterior parameters
+V.bar.inv   = t(X)%*%X + diag(1/diag(V.prior))
+V.bar       = solve(V.bar.inv)
+A.bar       = V.bar%*%(t(X)%*%Y + diag(1/diag(V.prior))%*%A.prior)
+nu.bar      = nrow(Y) + nu.prior
+S.bar       = S.prior + t(Y)%*%Y + t(A.prior)%*%diag(1/diag(V.prior))%*%A.prior - t(A.bar)%*%V.bar.inv%*%A.bar
+S.bar.inv   = solve(S.bar)
+
+# posterior draws 
+Sigma.posterior   = rWishart(S, df=nu.bar, Sigma=S.bar.inv)
+Sigma.posterior   = apply(Sigma.posterior,3,solve)
+Sigma.posterior   = array(Sigma.posterior,c(N,N,S))
+A.posterior       = array(rnorm(prod(c(dim(A.bar),S))),c(dim(A.bar),S))
+L                 = t(chol(V.bar))
+for (s in 1:S){
+  A.posterior[,,s]= A.bar + L%*%A.posterior[,,s]%*%chol(Sigma.posterior[,,s])
+}
+
+### Simulate draws from predictive density
 Y.h         = array(NA,c(h,N,S))
 
 for (s in 1:S){
@@ -484,23 +770,7 @@ for (s in 1:S){
 
 ```
 
-## Forecast plots
-
-```{r Colors , echo=FALSE,  message=FALSE, warning=FALSE, results='hide'}
-# Define colors
-mcxs1  = "#05386B"
-mcxs2  = "#379683"
-mcxs3  = "#5CDB95"
-mcxs4  = "#8EE4AF"
-mcxs5  = "#EDF5E1"
-
-mcxs1.rgb   = col2rgb(mcxs1)
-mcxs1.shade1= rgb(mcxs1.rgb[1],mcxs1.rgb[2],mcxs1.rgb[3], alpha=120, maxColorValue=255)
-mcxs2.rgb   = col2rgb(mcxs2)
-mcxs2.shade1= rgb(mcxs2.rgb[1],mcxs2.rgb[2],mcxs2.rgb[3], alpha=120, maxColorValue=255)
-```
-
-```{r}
+```{r Forecast plots}
 
 x_dates <- format(as.yearqtr(c(dates, seq(tail(dates, 1), by = "quarter", length.out = h + 1)[-1])), "%Y Q%q")
 par(mfrow = c(5, 2), mar = c(2, 2, 1, 1), oma = c(0, 0, 2, 0))
@@ -513,30 +783,13 @@ for (i in 1:10) {
 
     plot(1:(nrow(y) + h), combined_data, type = "l", ylim = range_val, xlab = "", ylab = "", col = mcxs2, lwd = 2, main = paste("Forecast", var_names[i]), bty = "n", xaxt = "n")
     axis(1, at = 1:(nrow(y) + h), labels= x_dates, cex.axis = 0.7, tck = 0)
-    abline(v = nrow(y), col = mcxs1)  
+    abline(v = nrow(y)+1, col = mcxs1)  
     
     polygon(c((nrow(y)+1):(nrow(y)+h), rev((nrow(y)+1):(nrow(y)+h))),
             c(interval.f[1, ], rev(interval.f[2, ])), col = mcxs2.shade1, border = mcxs1.shade1)
 }
 ```
-
-
-## Model extension: T-Distributed errors
-
-An interesting specification in our model of forecasting real wages is the introduction of t-Distributed error terms. This specification is particularly notable because the t-distribution, with its heavier tails, may better account for potential outliers and the distributional characteristics of the time series data. This approach aims to enhance the model's robustness and accuracy in capturing the variability in real wage changes.
-
-Following @chan2020large, the general Covariance structure is
-
-```{=tex}
-\begin{align}
-vec(U) &\sim (0, \Sigma \otimes \Omega)
-\end{align}
-```
-where $\Omega$ is a $T \times T$ covariance matrix.
-
-If $\Sigma=diag(\lambda_1,...,\lambda_t)$
-and each 
-
+We observe the real wages to stabilize in the future, but not to reach levels of the pre-Covid area.
 
 
 # References {.unnumbered}
