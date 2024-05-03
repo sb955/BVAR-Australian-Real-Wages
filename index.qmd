@@ -707,6 +707,116 @@ round(mean(lambda.posterior.draws[,s]),2)
 ```
 One can observe, that the means represent exactly the expected values, whereas the variances lie a bit further apart from 1. Lambda 
 
+
+####Include $nu$ sampling
+
+```{r echo=FALSE, reults='hide'}
+#code used from Chan(Large Bayesian Vars)
+#new prior
+lambda.nu.prior = 3
+
+#initialize chain
+lambda.init = rinvgamma(t, lambda.nu.prior/2, lambda.nu.prior/2)
+omega.init = diag(lambda.init)
+omega.init.inv = solve(omega.init)
+
+
+Sigma.posterior.draws <- array(dim = c(N, N, S))
+A.posterior.draws <- array(dim = c(K, N, S))
+Omega.posterior.draws <- array(dim=c(t,t,S+1))
+Omega.posterior.draws[,,1] <- omega.init
+
+#store_nu <- numeric(S)
+lambda.posterior.draws = array(NA,c(t,S))
+lambda.s.posterior = array(NA,c(t,S))
+
+#nudraws
+nu.draws = array(NA,S)
+nuub = 30
+countnu = 0
+
+for(s in 1:S){
+  Omega.inv_s     = solve(Omega.posterior.draws[,,s])
+  
+  V.bar.ext       = solve(t(X.bv)%*%Omega.inv_s%*%X.bv + solve(V.prior))
+  A.bar.ext       = V.bar.ext%*%(t(X.bv)%*%Omega.inv_s%*%Y.bv + solve(V.prior)%*%A.prior)
+  nu.bar.ext      = t + nu.prior
+  S.bar.ext       = S.prior + t(Y.bv)%*%Omega.inv_s%*%Y.bv + t(A.prior)%*%solve(V.prior)%*%A.prior - t(A.bar.ext)%*%solve(V.bar.ext)%*%A.bar.ext
+  S.bar.ext       = (S.bar.ext %*% t(S.bar.ext))/2
+  #S.bar.ext.inv   = solve(S.bar.ext)
+  #L               = t(chol(V.bar.ext.inv))
+  
+  Sigma.posterior.draws[,,s] = rWishart(1, nu.bar.ext, solve(S.bar.ext))[,,1]  #solve(S.bar.ext)??
+  Sigma.posterior.draws[,,s] = solve(Sigma.posterior.draws[,,s])
+  A.posterior.draws[,,s] = matrix(mvtnorm::rmvnorm(1, mean=as.vector(A.bar.ext), sigma = Sigma.posterior.draws[,,s] %x% V.bar.ext), ncol=N)
+  
+  U_s <- Y.bv - X.bv %*% A.posterior.draws[,,s]
+  for (x in 1:t){
+    lambda.s.posterior[,s] = lambda.nu.prior + t((U_s)[x,])%*%Sigma.posterior.draws[,,s]%*%(U_s)[x,]
+  }
+  
+  lambda.v.posterior = N + lambda.nu.prior
+  
+  for (x in 1:t){
+    lambda.posterior.draws[x,s] = rinvgamma(1,lambda.v.posterior/2, lambda.s.posterior[x,s]/2)
+  }
+  
+  Omega.posterior.draws[,,s+1] = diag(lambda.posterior.draws[,s])
+  
+  
+  binary <- 0
+  sum1 <- sum(log(lambda.posterior.draws[,s]))
+  sum2 <- sum(1/lambda.posterior.draws[,s])
+  
+  funct.nu <- function(x) {
+    t * (x/2 * log(x/2) - lgamma(x/2)) - (x/2 + 1) * sum1 - x/2 * sum2
+  }
+  #first derivative
+  f1 <- function(x) {
+    t/2 * (log(x/2) + 1 - digamma(x/2)) - 0.5 * (sum1 + sum2)
+  }
+  #second derivative
+  f2 <- function(x) {
+    t/(2*x) - t/4 * trigamma(x/2)
+  }
+  
+  err_nu <- 1
+  nut <- nu
+  while (abs(err_nu) > 10^(-5)) {
+    err_nu <- f1(nut)
+    Knu <- -f2(nut)
+    nut <- nut + err_nu / Knu
+    if (nut < 2) {
+      nut <- 5
+      Knu <- -f2(nut)
+      break
+    }
+  }
+  
+  sqrtDnu <- sqrt(1/Knu)
+  nuc <- rnorm(1, mean = nut, sd = sqrtDnu)
+  
+  if (nuc > 2 && nuc < nuub) {
+    alp_MH <- exp(funct.nu(nuc) - funct.nu(nu)) * dnorm(nu, mean = nut, sd = sqrtDnu) / dnorm(nuc, mean = nut, sd = sqrtDnu)
+    if (alp_MH > runif(1)) {
+      nu.draws[s] <- nuc
+      binary <- 1
+    }
+  }
+  
+} 
+
+
+round(apply(A.posterior.draws[,,s], 1:2, mean),2)
+round(apply(Sigma.posterior.draws[,,s], 1:2, mean),2) * round(mean(lambda.posterior.draws[,51:100]),2)
+round(mean(lambda.posterior.draws[,s]),2)
+round(mean(nu.draws[s]),2)
+
+```
+
+
+
+
 ####Further research
 
 Running the code with 100 samples is already very computational intensive. I will be necessary to apply tools by @@chan2020large to reduce computational intensity. 
