@@ -652,7 +652,7 @@ A.prior[2:(N+1),] = diag(N)
 V.prior     = diag(c(kappa.2,kappa.1*((1:p)^(-2))%x%rep(1,N)))
 S.prior     = diag(diag(Sigma.hat))
 nu.prior    = N+1
-lambda.nu.prior =5
+lambda.nu.prior = 5
 
 #initialize chain
 lambda.init = rinvgamma(t, lambda.nu.prior/2, lambda.nu.prior/2)
@@ -705,15 +705,47 @@ round(apply(A.posterior.draws[,,s], 1:2, mean),2)
 round(apply(Sigma.posterior.draws[,,s], 1:2, mean),2) * round(mean(lambda.posterior.draws[,51:100]),2)
 round(mean(lambda.posterior.draws[,s]),2)
 ```
-One can observe, that the means represent exactly the expected values, whereas the variances lie a bit further apart from 1. Lambda 
+One can observe, that the means represent exactly the expected values, whereas the variances lie a bit further apart from 1. 
 
 
-####Include $\nu$ sampling
+#### Include $\nu$ sampling
 
-```{r echo=FALSE, reults='hide'}
-#code used from Chan(Large Bayesian Vars)
-#new prior
-lambda.nu.prior = 3
+```{r echo=TRUE, }
+#initialize chain
+library(MCMCpack)
+set.seed(9999)
+rw_data = data.frame(matrix(nrow=100, ncol=2))
+rw_data[,1] = cumsum(rnorm(100,0,1))
+rw_data[,2] = cumsum(rnorm(100,0,1))
+
+
+y.bv <- ts(rw_data,  frequency=1)
+N = ncol(y.bv)
+p       = 1
+S       = 100
+h       = 8
+Y.bv       = ts(y.bv[(p+1):nrow(y.bv),])
+X.bv      = matrix(1,nrow(Y.bv),1)
+for (i in 1:p){
+  X.bv     = cbind(X.bv,y.bv[(p+1):nrow(y.bv)-i,])
+}
+
+A.hat       = solve(t(X.bv)%*%X.bv)%*%t(X.bv)%*%Y.bv
+Sigma.hat   = t(Y.bv-X.bv%*%A.hat)%*%(Y.bv-X.bv%*%A.hat)/nrow(Y.bv)
+
+t <- NROW(Y.bv)
+kappa.1 <- 0.02^2
+kappa.2 <-100
+K = 1 + (p*N)
+nu=5
+
+A.prior     = matrix(0, K , N)
+A.prior[2:(N+1),] = diag(N)
+V.prior     = diag(c(kappa.2,kappa.1*((1:p)^(-2))%x%rep(1,N)))
+S.prior     = diag(diag(Sigma.hat))
+nu.prior    = N+1
+lambda.nu.prior = 3.2
+
 
 #initialize chain
 lambda.init = rinvgamma(t, lambda.nu.prior/2, lambda.nu.prior/2)
@@ -763,8 +795,8 @@ for(s in 1:S){
   
   Omega.posterior.draws[,,s+1] = diag(lambda.posterior.draws[,s])
   
-  #nu sampling
-  binary <- 0
+  
+  binary <- 1
   sum1 <- sum(log(lambda.posterior.draws[,s]))
   sum2 <- sum(1/lambda.posterior.draws[,s])
   
@@ -781,7 +813,7 @@ for(s in 1:S){
   }
   
   err_nu <- 1
-  nut <- nu
+  nut <- lambda.nu.prior
   while (abs(err_nu) > 10^(-5)) {
     err_nu <- f1(nut)
     Knu <- -f2(nut)
@@ -797,13 +829,13 @@ for(s in 1:S){
   nuc <- rnorm(1, mean = nut, sd = sqrtDnu)
   
   if (nuc > 2 && nuc < nuub) {
-    alp_MH <- exp(funct.nu(nuc) - funct.nu(nu)) * dnorm(nu, mean = nut, sd = sqrtDnu) / dnorm(nuc, mean = nut, sd = sqrtDnu)
+    alp_MH <- exp(funct.nu(nuc) - funct.nu(lambda.nu.prior)) * dnorm(lambda.nu.prior, mean = nut, sd = sqrtDnu) / dnorm(nuc, mean = nut, sd = sqrtDnu)
     if (alp_MH > runif(1)) {
       nu.draws[s] <- nuc
       binary <- 1
     }
   }
-  
+  list(lambda.nu.prior = lambda.nu.prior, binary = binary, funct.nu = funct.nu)
 } 
 
 
@@ -814,15 +846,15 @@ round(mean(nu.draws[s]),2)
 
 ```
 
-Mean of $\nu$ settles around 4. Results vary a lot when adjusting the prior of $\nu$. 
+The results vary a lot when adjusting the prior of $\lambda_{nu}$. 
 
 
 
-####Further research
+#### Further research
 
-Running the code with 100 samples is already very computational intensive. I will be necessary to apply tools by @@chan2020large to reduce computational intensity. 
+Running the code with 100 samples is already very computational intensive. I will be necessary to apply tools by @chan2020large to reduce computational intensity. 
 
-Sammpling $/nu$ can also be of further interest, instead of using a fixed value. 
+A grid search search for the prior of $\lambda_{\nu}$, since the models parameters explode for guesses outside a specific range.
 
 ### Real Wage data forecasts
 
