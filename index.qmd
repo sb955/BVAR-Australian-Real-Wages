@@ -512,12 +512,12 @@ Following @chan2020large, the general Covariance structure is
 
 ```{=tex}
 \begin{align}
-vec(U) &\sim (0, \Sigma \otimes \Omega)
+vec(E) &\sim (0, \Sigma \otimes \Omega)
 \end{align}
 ```
 where $\Omega$ is a $T \times T$ covariance matrix.
 
-If $\Sigma=diag(\lambda_1,...,\lambda_t)$ and each $\lambda_t \mid \nu \sim \operatorname{IG}(\nu, s)$, then $U$ has a multivariate t-distribution.
+If $\Omega=diag(\lambda_1,...,\lambda_T)$ and each $\lambda_t \mid \nu \sim \operatorname{IG2}(\nu, \nu)$, then $E$ has a multivariate t-distribution.
 
 The likelihood is now given by
 
