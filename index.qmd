@@ -239,7 +239,7 @@ for (j in 1:ncol(df)) {
 
 ### Augmented Dickey-Fuller test
 
-The ADF test results confirm the non-stationarity observed in the ACF plots. Specifically, first differences  suffices for all variables except the unemployment rate, which is stationary on the 5% level, and the CPI and CLI, which require second-order differencingto in order to be stationary.
+The ADF test results confirm the non-stationarity observed in the ACF plots. Specifically, first differences suffices for all variables except the unemployment rate, which is stationary on the 5% level, and the CPI and CLI, which require second-order differencingto in order to be stationary.
 
 ```{r ADF_table,  message=FALSE, warning=FALSE}
 
@@ -319,7 +319,6 @@ plot(rw_data[,1], type='l', ylim=c(min(rw_data), max(rw_data)), col=mcxs1, ylab=
 lines(rw_data[,2], col=mcxs2, ylab='', xlab='')
 ```
 
-
 ### VAR representation
 
 To analyze the macroeconomic and financial variables and run forecasts, a Vector autoregression (VAR) model, introduced by @sims1972money can be applied, which allows for the multivariate framework of several time series. A general VAR model with $\rho$ lags for $t=1,...,T$ can be stated as:
@@ -327,10 +326,10 @@ To analyze the macroeconomic and financial variables and run forecasts, a Vector
 ```{=tex}
 \begin{align}
 y_{t}   &=\mu_{0}+A_{1}y_{t-1}+...+A_{\rho}y_{t-\rho}+\epsilon_{t}\\
-\epsilon_{t}|Y_{T-1}    &\sim iid\left(0_{N},\Sigma\right)
+\epsilon_{t}|Y_{T-1}    &\sim iid\left N(0_{N},\Sigma\right)
 \end{align}
 ```
-Where $y_{t}$ is a $N\times 1$ vector of observations at time $t$, $\mu_{0}$ is a $N\times1$ vector of constant terms, $A_{i}$ is a $N\times N$ vector of the autoregressive slope parameters, $\epsilon_{t}$ is a $N \times 1$ vector of error terms, $Y_{t-1}$ is the information set and $\Sigma$ is the $N \times N$ covariance matrix of the error term.
+Where $y_{t}$ is a $N\times 1$ vector of observations at time $t$, $\mu_{0}$ is a $N\times1$ vector of constant terms, $A_{i}$ is a $N\times N$ matrix of the autoregressive slope parameters, $\epsilon_{t}$ is a $N \times 1$ vector of error terms, $Y_{t-1}$ is the information set and $\Sigma$ is the $N \times N$ covariance matrix of the error term.
 
 ### Baseline estimation
 
@@ -351,8 +350,6 @@ Y=XA + E\\
 Y|X,A,\Sigma &\sim MN_{T \times N} (XA, \Sigma, I_T).
 \end{align}
 ```
-
-
 ```{r Base model set-up  , echo=TRUE, results='hide'}
 y.bv <- ts(rw_data,  frequency=1)
 N = ncol(y.bv)
@@ -390,7 +387,6 @@ The maximum likelihood estimators are represented by:
 \hat{\Sigma} &= \frac{1}{T} (Y-X \hat{A})'(Y-X \hat{A}).
 \end{align}
 ```
-
 ```{r Maximum Likelihood  , echo=TRUE}
 A.hat       = solve(t(X.bv)%*%X.bv)%*%t(X.bv)%*%Y.bv
 Sigma.hat   = t(Y.bv-X.bv%*%A.hat)%*%(Y.bv-X.bv%*%A.hat)/nrow(Y.bv)
@@ -416,7 +412,6 @@ with the priors to be specified as Minnesota priors following @doan1984forecasti
 \underline{V} &= diag([\kappa_2, \quad \kappa_1 (p^{-2} \otimes I_N)]).
 \end{align}
 ```
-
 ```{r Minnesota priors, echo=TRUE}
 N = ncol(Y.bv)
     
@@ -466,7 +461,6 @@ where paramters $\bar{A}$ , $\bar{V}$, $\bar{S}$ and $\bar{\nu}$ characterise th
 \bar{S} &= \underline{S} + Y'Y + \underline{A}'\underline{V}^{-1}\underline{A} - \bar{A}'\bar{V}^{-1}\bar{A}.
 \end{align}
 ```
-
 ```{r NIW posterior paramters, echo=TRUE}
 V.bar.inv   = t(X.bv)%*%X.bv + diag(1/diag(V.prior))
 V.bar       = solve(V.bar.inv)
@@ -481,7 +475,7 @@ S.bar.inv   = solve(S.bar)
 #round(nu.bar,3)
 ```
 
-### Posterior draws and Gibbs sampler 
+### Posterior draws and Gibbs sampler
 
 ```{r Posterior darws , echo=TRUE, message=FALSE, warning=FALSE, results='hide'}
 Sigma.posterior   = rWishart(S, df=nu.bar, Sigma=S.bar.inv)
@@ -508,7 +502,7 @@ round(A.E, 3)
 round(Sigma.E, 3)
 ```
 
-The estimated parameters are close to the expected values of 1 for a 1-period memory of a random process. 
+The estimated parameters are close to the expected values of 1 for a 1-period memory of a random process.
 
 # Model extension: T-Distributed errors
 
@@ -521,19 +515,18 @@ Following @chan2020large, the general Covariance structure is
 vec(U) &\sim (0, \Sigma \otimes \Omega)
 \end{align}
 ```
-where $\Omega$ is a $T \times T$ covariance matrix. 
+where $\Omega$ is a $T \times T$ covariance matrix.
 
-If $\Sigma=diag(\lambda_1,...,\lambda_t)$ and each $\lambda_t \mid \nu \sim \operatorname{IG}(\nu, s)$,
-then $U$ has a multivariate t-distribution. 
+If $\Sigma=diag(\lambda_1,...,\lambda_t)$ and each $\lambda_t \mid \nu \sim \operatorname{IG}(\nu, s)$, then $U$ has a multivariate t-distribution.
 
 The likelihood is now given by
+
 ```{=tex}
 \begin{align}
 p(Y|A,\Sigma, \Omega) &= (2\pi)^{-\frac{TN}{2}} \det(\Omega)^{-\frac{T}{2}} det(\Sigma)^{-\frac{T}{2}} exp \left\{-\frac{1}{2} tr \left[ \Sigma^{-1}(A-\hat{A})'X'X(A-\hat{A}) \right] \right\}\\
 &\times exp \left\{-\frac{1}{2} tr \left[\Sigma^{-1}(Y-X \hat{A})'(Y-X \hat{A}) \right] \right\}.
 \end{align}
 ```
-
 In this framework, $A$ and $\Sigma$ will follow a normal-inverse-Wishart prior:
 
 ```{=tex}
@@ -541,7 +534,6 @@ In this framework, $A$ and $\Sigma$ will follow a normal-inverse-Wishart prior:
 \Sigma \sim \operatorname{IW}(\underline{s}, \underline{v}), \quad (\operatorname{vec}(A) \mid \Sigma) \sim \mathcal{N}(\operatorname{vec}(\underline{A}), \Sigma \otimes \underline{V})
 \end{align}
 ```
-
 with joint density
 
 ```{=tex}
@@ -550,8 +542,8 @@ p(A, \Sigma) &= \det(\Sigma)^{-\frac{\nu +N+K}{2}} \times exp\{-\frac{1}{2} tr[\
 &\times exp\{-\frac{1}{2}tr[\Sigma^{-1}(A-\underline{A})'\underline{V}^{-1}(A-\underline{A})]\}
 \end{align}
 ```
-
 The kernel of the joint posterior as our product of Likelihood and joint density is then expressed as
+
 ```{=tex}
 \begin{align}
 p(A,\Sigma|Y, \Omega) &\propto \det(\Sigma)^{-\frac{T}{2}} \times \det(\Omega)^{-\frac{N}{2}} \\
@@ -569,7 +561,6 @@ After rearranging terms, the Kernel of the posterior distribution can be obtaine
 &\times exp\{-\frac{1}{2}tr[\Sigma^{-1}\bar{s}]\},
 \end{align}
 ```
-
 which follows a multinomial-normal-inverse-wishart distribution:
 
 ```{=tex}
@@ -577,7 +568,6 @@ which follows a multinomial-normal-inverse-wishart distribution:
 p(A, \Sigma|Y,X) &\sim \operatorname{MNIW}(\bar{A}, \bar{V}, \bar{s}, \bar{v}).
 \end{align}
 ```
-
 The posterior parameters are then given as follows:
 
 ```{=tex}
@@ -588,22 +578,24 @@ The posterior parameters are then given as follows:
 \bar{S} &= \underline{S} + Y'\Omega^{-1}Y + \underline{A}'\underline{V}^{-1}\underline{A} - \bar{A}'\bar{V}^{-1}\bar{A}.
 \end{align}
 ```
-
 ### Distribution of $\lambda_t$
 
 The likelihood defines as
+
 ```{=tex}
 \begin{align}
 L(A, \Sigma, \lambda | Y, X) = \lambda_t^{-\frac{N}{2}} \times \exp\left\{-\frac{1}{2} \frac{1}{\lambda_t} \epsilon_t' \Sigma^{-1} \epsilon_t \right\}.
 \end{align}
 ```
 Hence, $\lambda \sim \operatorname{IG2}(\nu, \nu)$ defined as
+
 ```{=tex}
 \begin{align}
 p(\lambda_t|\nu) &= \lambda_t^{ -\frac{N+ \nu +2}{2} } \times exp\{-\frac{1}{2} \frac{1}{\lambda_t} \nu\}.
 \end{align}
 ```
 The joint posterior now derives in the common procedure
+
 ```{=tex}
 \begin{align}
 p(\lambda_t|Y,X,A,\Sigma) &\propto L(A,\Sigma,\lambda|Y,X) \times p(\lambda_t|\nu)\\
@@ -613,12 +605,12 @@ p(\lambda_t|Y,X,A,\Sigma) &\propto L(A,\Sigma,\lambda|Y,X) \times p(\lambda_t|\n
 with $\epsilon_t = (y_t-x_t'A)$.
 
 The kernel of the joint posterior follows an inverse gamma 2 distribution.
+
 ```{=tex}
 \begin{align}
 p(\lambda_t|Y,X,A,\Sigma) &\sim \operatorname{IG2}(N+\nu, \nu+\epsilon_t'\Sigma^{-1}\epsilon_t)
 \end{align}
 ```
-
 ```{r echo=TRUE}
 set.seed(9999)
 rw_data = data.frame(matrix(nrow=100, ncol=2))
@@ -705,8 +697,8 @@ round(apply(A.posterior.draws[,,s], 1:2, mean),2)
 round(apply(Sigma.posterior.draws[,,s], 1:2, mean),2) * round(mean(lambda.posterior.draws[,51:100]),2)
 round(mean(lambda.posterior.draws[,s]),2)
 ```
-One can observe, that the means represent exactly the expected values, whereas the variances lie a bit further apart from 1. 
 
+One can observe, that the means represent exactly the expected values, whereas the variances lie a bit further apart from 1.
 
 #### Include $\nu$ sampling
 
@@ -846,13 +838,11 @@ round(mean(nu.draws[s]),2)
 
 ```
 
-The results vary a lot when adjusting the prior of $\lambda_{nu}$. 
-
-
+The results vary a lot when adjusting the prior of $\lambda_{nu}$.
 
 #### Further research
 
-Running the code with 100 samples is already very computational intensive. I will be necessary to apply tools by @chan2020large to reduce computational intensity. 
+Running the code with 100 samples is already very computational intensive. I will be necessary to apply tools by @chan2020large to reduce computational intensity.
 
 A grid search search for the prior of $\lambda_{\nu}$, since the models parameters explode for guesses outside a specific range.
 
@@ -940,7 +930,7 @@ for (i in 1:10) {
             c(interval.f[1, ], rev(interval.f[2, ])), col = mcxs2.shade1, border = mcxs1.shade1)
 }
 ```
-We observe the real wages to stabilize in the future, but not to reach levels of the pre-Covid area.
 
+We observe the real wages to stabilize in the future, but not to reach levels of the pre-Covid area.
 
 # References {.unnumbered}
