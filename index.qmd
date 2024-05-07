@@ -335,7 +335,7 @@ Where $y_{t}$ is a $N\times 1$ vector of observations at time $t$, $\mu_{0}$ is 
 
 In order to define the baseline model, additional notation is being introduced following @wozniak2016bayesian.
 
-Let a $K \times 1$ vector with $K=1+\rho N$ collect all of the data vectors on the RHS of the equation $\mathbf{x}_t = \left(1, y_{t-1}', \ldots, y_{t-\rho}' \right)$ and $K\times N$ matrix the intercept term and the autoregressive matrices $\mathbf{A} = \left(\mu, A_1, ... , A_{\rho}} \right)'$, then the VAR process can be written as
+Let a $K \times 1$ vector with $K=1+\rho N$ collect all of the data vectors on the RHS of the equation $\mathbf{x}_t = \left(1, y_{t-1}', \ldots, y_{t-\rho}' \right)$ and $K\times N$ matrix the intercept term and the autoregressive matrices $\mathbf{A} = \left(\mu, A_1, ... , A_{\rho} \right)'$, then the VAR process can be written as
 
 ```{=tex}
 \begin{align}
