@@ -75,6 +75,7 @@ library(knitr)
 library(kableExtra)
 library(forecast)
 library(tseries)
+
 ```
 
 ```{r Colors , echo=FALSE,  message=FALSE, warning=FALSE, results='hide'}
@@ -648,32 +649,27 @@ lambda.nu.prior = 5
 
 #initialize chain
 lambda.init = rinvgamma(t, lambda.nu.prior/2, lambda.nu.prior/2)
-omega.init = diag(lambda.init)
-omega.init.inv = solve(omega.init)
-
 
 Sigma.posterior.draws <- array(dim = c(N, N, S))
 A.posterior.draws <- array(dim = c(K, N, S))
-Omega.posterior.draws <- array(dim=c(t,t,S+1))
-Omega.posterior.draws[,,1] <- omega.init
 
 #store_nu <- numeric(S)
-lambda.posterior.draws = array(NA,c(t,S))
+lambda.posterior.draws = array(NA,c(t,S+1))
+lambda.posterior.draws[,1] <- lambda.init
 lambda.s.posterior = array(NA,c(t,S))
 
 for(s in 1:S){
-  Omega.inv_s     = solve(Omega.posterior.draws[,,s])
   
-  V.bar.ext       = solve(t(X.bv)%*%Omega.inv_s%*%X.bv + solve(V.prior))
-  A.bar.ext       = V.bar.ext%*%(t(X.bv)%*%Omega.inv_s%*%Y.bv + solve(V.prior)%*%A.prior)
+  V.bar.ext       = solve(t(X.bv)%*%diag(1/(lambda.posterior.draws[,s]))%*%X.bv + solve(V.prior))
+  A.bar.ext       = V.bar.ext%*%(t(X.bv)%*%diag(1/(lambda.posterior.draws[,s]))%*%Y.bv + solve(V.prior)%*%A.prior)
   nu.bar.ext      = t + nu.prior
-  S.bar.ext       = S.prior + t(Y.bv)%*%Omega.inv_s%*%Y.bv + t(A.prior)%*%solve(V.prior)%*%A.prior - t(A.bar.ext)%*%solve(V.bar.ext)%*%A.bar.ext
-  S.bar.ext       = (S.bar.ext %*% t(S.bar.ext))/2
+  S.bar.ext       = S.prior + t(Y.bv)%*%diag(1/(lambda.posterior.draws[,s]))%*%Y.bv + t(A.prior)%*%solve(V.prior)%*%A.prior - t(A.bar.ext)%*%solve(V.bar.ext)%*%A.bar.ext
   #S.bar.ext.inv   = solve(S.bar.ext)
   #L               = t(chol(V.bar.ext.inv))
   
   Sigma.posterior.draws[,,s] = rWishart(1, nu.bar.ext, solve(S.bar.ext))[,,1]  #solve(S.bar.ext)??
   Sigma.posterior.draws[,,s] = solve(Sigma.posterior.draws[,,s])
+  
   A.posterior.draws[,,s] = matrix(mvtnorm::rmvnorm(1, mean=as.vector(A.bar.ext), sigma = Sigma.posterior.draws[,,s] %x% V.bar.ext), ncol=N)
   
   U_s <- Y.bv - X.bv %*% A.posterior.draws[,,s]
@@ -686,10 +682,8 @@ for(s in 1:S){
   lambda.v.posterior = N + lambda.nu.prior
   
   for (x in 1:t){
-    lambda.posterior.draws[x,s] = rinvgamma(1,lambda.v.posterior/2, lambda.s.posterior[x,s]/2)
+    lambda.posterior.draws[x,s+1] = rinvgamma(1,lambda.v.posterior/2, lambda.s.posterior[x,s]/2)
   }
-  
-  Omega.posterior.draws[,,s+1] = diag(lambda.posterior.draws[,s])
 } 
   
 
