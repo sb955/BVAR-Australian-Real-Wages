@@ -518,7 +518,7 @@ vec(E) &\sim (0, \Sigma \otimes \Omega)
 ```
 where $\Omega$ is a $T \times T$ covariance matrix.
 
-If $\Omega=diag(\lambda_1,...,\lambda_T)$ and each $\lambda_t \mid \nu \sim \operatorname{IG2}(\nu, \nu)$, then $E$ has a multivariate t-distribution.
+If $\Omega=diag(\lambda_1,...,\lambda_T)$ and each $\lambda_t \mid \nu \sim \operatorname{IG2}(\nu, \nu)$, then $\epsilon_t$ has a multivariate t-distribution.
 
 The likelihood is now given by
 
@@ -588,7 +588,7 @@ The likelihood defines as
 L(A, \Sigma, \lambda | Y, X) = \lambda_t^{-\frac{N}{2}} \times \exp\left\{-\frac{1}{2} \frac{1}{\lambda_t} \epsilon_t' \Sigma^{-1} \epsilon_t \right\}.
 \end{align}
 ```
-The prior density of $\lambda \sim \operatorname{IG2}(\nu, \nu)$ defined as
+The prior density of $\lambda \sim \operatorname{IG2}(\nu_{\lambda}, \nu_{\lambda})$ defined as
 
 ```{=tex}
 \begin{align}
