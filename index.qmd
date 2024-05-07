@@ -587,19 +587,19 @@ The likelihood defines as
 L(A, \Sigma, \lambda | Y, X) = \lambda_t^{-\frac{N}{2}} \times \exp\left\{-\frac{1}{2} \frac{1}{\lambda_t} \epsilon_t' \Sigma^{-1} \epsilon_t \right\}.
 \end{align}
 ```
-Hence, $\lambda \sim \operatorname{IG2}(\nu, \nu)$ defined as
+The prior density of $\lambda \sim \operatorname{IG2}(\nu, \nu)$ defined as
 
 ```{=tex}
 \begin{align}
-p(\lambda_t|\nu) &= \lambda_t^{ -\frac{N+ \nu +2}{2} } \times exp\{-\frac{1}{2} \frac{1}{\lambda_t} \nu\}.
+p(\lambda_t|\nu_{\lambda}) &= \lambda_t^{ -\frac{N+ \nu_{\lambda} +2}{2} } \times exp\{-\frac{1}{2} \frac{1}{\lambda_t} \nu_{\lambda}\}.
 \end{align}
 ```
 The joint posterior now derives in the common procedure
 
 ```{=tex}
 \begin{align}
-p(\lambda_t|Y,X,A,\Sigma) &\propto L(A,\Sigma,\lambda|Y,X) \times p(\lambda_t|\nu)\\
-&= \lambda_t^{-\frac{N+ \nu +2}{2}} \times exp\{-\frac{1}{2} \frac{1}{\lambda_t}(\nu + \epsilon_t' \Sigma^{-1} \epsilon_t),
+p(\lambda_t|Y,X,A,\Sigma) &\propto L(A,\Sigma,\lambda|Y,X) \times p(\lambda_t|\nu_{\lambda})\\
+&= \lambda_t^{-\frac{N+ \nu_{\lambda} +2}{2}} \times exp\{-\frac{1}{2} \frac{1}{\lambda_t}(\nu_{\lambda} + \epsilon_t' \Sigma^{-1} \epsilon_t),
 \end{align}
 ```
 with $\epsilon_t = (y_t-x_t'A)$.
@@ -608,7 +608,7 @@ The kernel of the joint posterior follows an inverse gamma 2 distribution.
 
 ```{=tex}
 \begin{align}
-p(\lambda_t|Y,X,A,\Sigma) &\sim \operatorname{IG2}(N+\nu, \nu+\epsilon_t'\Sigma^{-1}\epsilon_t)
+p(\lambda_t|Y,X,A,\Sigma) &\sim \operatorname{IG2}(N+\nu_{\lambda}, \nu_{\lambda}+\epsilon_t'\Sigma^{-1}\epsilon_t)
 \end{align}
 ```
 ```{r echo=TRUE}
