@@ -326,7 +326,7 @@ To analyze the macroeconomic and financial variables and run forecasts, a Vector
 ```{=tex}
 \begin{align}
 y_{t}   &=\mu_{0}+A_{1}y_{t-1}+...+A_{\rho}y_{t-\rho}+\epsilon_{t}\\
-\epsilon_{t}|Y_{T-1}    &\sim iid\left N(0_{N},\Sigma\right)
+\epsilon_{t}|Y_{T-1}    &\sim iid\left N_{N}(0_{N},\Sigma\right)
 \end{align}
 ```
 Where $y_{t}$ is a $N\times 1$ vector of observations at time $t$, $\mu_{0}$ is a $N\times1$ vector of constant terms, $A_{i}$ is a $N\times N$ matrix of the autoregressive slope parameters, $\epsilon_{t}$ is a $N \times 1$ vector of error terms, $Y_{t-1}$ is the information set and $\Sigma$ is the $N \times N$ covariance matrix of the error term.
@@ -335,7 +335,7 @@ Where $y_{t}$ is a $N\times 1$ vector of observations at time $t$, $\mu_{0}$ is 
 
 In order to define the baseline model, additional notation is being introduced following @wozniak2016bayesian.
 
-Let a $K \times 1$ vector with $K=1+kN$ collect all of the data vectors on the RHS of the equation $\mathbf{x}_t = \left(1, y_{t-1}', \ldots, y_{t-k}' \right)$ and $K\times N$ matrix the intercept term and the autoregressive matrices $\mathbf{A} = \left(\mu, A_1, ... , A_k \right)'$, then the VAR process can be written as
+Let a $K \times 1$ vector with $K=1+\rho N$ collect all of the data vectors on the RHS of the equation $\mathbf{x}_t = \left(1, y_{t-1}', \ldots, y_{t-\rho}' \right)$ and $K\times N$ matrix the intercept term and the autoregressive matrices $\mathbf{A} = \left(\mu, A_1, ... , A_{\rho}} \right)'$, then the VAR process can be written as
 
 ```{=tex}
 \begin{align}
