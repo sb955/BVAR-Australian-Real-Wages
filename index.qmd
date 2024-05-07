@@ -443,7 +443,7 @@ p(A,\Sigma|Y,X) &\propto \det(\Sigma)^{-\frac{T}{2}} \\
 &\times exp(-\frac{1}{2}tr[\Sigma^{-1}\underline{S}]).
 \end{align}
 ```
-Combining terms yields the following distirbutions for $A$ and $\Sigma$:
+Combining terms yields the following distributions for $A$ and $\Sigma$:
 
 ```{=tex}
 \begin{align}
@@ -451,7 +451,7 @@ p(A|Y,X,\Sigma) &= MN_{K \times N}(\bar{A}, \Sigma, \bar{V}) \\
 p(\Sigma|Y,X) &= IW_N(\bar{S},\bar{\nu}),
 \end{align}
 ```
-where paramters $\bar{A}$ , $\bar{V}$, $\bar{S}$ and $\bar{\nu}$ characterise the posterior distribution and are given by
+where parameters $\bar{A}$ , $\bar{V}$, $\bar{S}$ and $\bar{\nu}$ characterising the posterior distribution and are given by
 
 ```{=tex}
 \begin{align}
