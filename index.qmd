@@ -665,12 +665,10 @@ for(s in 1:S){
   A.bar.ext       = V.bar.ext%*%(t(X.bv)%*%diag(1/(lambda.posterior.draws[,s]))%*%Y.bv + solve(V.prior)%*%A.prior)
   nu.bar.ext      = t + nu.prior
   S.bar.ext       = S.prior + t(Y.bv)%*%diag(1/(lambda.posterior.draws[,s]))%*%Y.bv + t(A.prior)%*%solve(V.prior)%*%A.prior - t(A.bar.ext)%*%solve(V.bar.ext)%*%A.bar.ext
-  #S.bar.ext.inv   = solve(S.bar.ext)
-  #L               = t(chol(V.bar.ext.inv))
   
-  Sigma.posterior.draws[,,s] = rWishart(1, nu.bar.ext, solve(S.bar.ext))[,,1]  #solve(S.bar.ext)??
-  Sigma.posterior.draws[,,s] = solve(Sigma.posterior.draws[,,s])
   
+  Sigma.inv.draw = rWishart(1, nu.bar.ext, S.bar.ext.inv)[,,1]
+  Sigma.posterior.draws[,,s] = solve(Sigma.inv.draw)
   A.posterior.draws[,,s] = matrix(mvtnorm::rmvnorm(1, mean=as.vector(A.bar.ext), sigma = Sigma.posterior.draws[,,s] %x% V.bar.ext), ncol=N)
   
   U_s <- Y.bv - X.bv %*% A.posterior.draws[,,s]
