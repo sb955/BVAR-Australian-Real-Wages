@@ -647,16 +647,12 @@ S.prior     = diag(diag(Sigma.hat))
 nu.prior    = N+1
 lambda.nu.prior = 5
 
-#initialize chain
-lambda.init = rinvgamma(t, lambda.nu.prior/2, lambda.nu.prior/2)
+#initialize
+lambda.0 = rinvgamma(t, lambda.nu.prior/2, lambda.nu.prior/2)
 
 Sigma.posterior.draws <- array(dim = c(N, N, S))
 A.posterior.draws <- array(dim = c(K, N, S))
-
-#store_nu <- numeric(S)
 lambda.posterior.draws = array(NA,c(t,S+1))
-lambda.posterior.draws[,1] <- lambda.init
-lambda.s.posterior = array(NA,c(t,S))
 
 for(s in 1:S){
   
