@@ -671,17 +671,10 @@ for(s in 1:S){
   Sigma.posterior.draws[,,s] = solve(Sigma.inv.draw)
   A.posterior.draws[,,s] = matrix(mvtnorm::rmvnorm(1, mean=as.vector(A.bar.ext), sigma = Sigma.posterior.draws[,,s] %x% V.bar.ext), ncol=N)
   
-  U_s <- Y.bv - X.bv %*% A.posterior.draws[,,s]
-  
-  #thanks to Yifang for nesting this out
   for (x in 1:t){
-    lambda.s.posterior[,s] = lambda.nu.prior + t((U_s)[x,])%*%Sigma.posterior.draws[,,s]%*%(U_s)[x,]
-  }
-  
-  lambda.v.posterior = N + lambda.nu.prior
-  
-  for (x in 1:t){
-    lambda.posterior.draws[x,s+1] = rinvgamma(1,lambda.v.posterior/2, lambda.s.posterior[x,s]/2)
+    u_t <- Y.bv[x,] - t(X.bv[x,]) %*% A.posterior.draws[,,s]
+    lambda = rinvgamma(1, N+lambda.nu.prior, lambda.nu.prior + u_t %*% Sigma.posterior.draws[,,s] %*% t(u_t) )
+    lambda.posterior.draws[x,s] <- lambda
   }
 } 
   
