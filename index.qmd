@@ -655,6 +655,11 @@ A.posterior.draws <- array(dim = c(K, N, S))
 lambda.posterior.draws = array(NA,c(t,S+1))
 
 for(s in 1:S){
+  if (s == 1) {
+    lambda.s = lambda.0
+  } else {
+    lambda.s    = lambda.posterior.draws[,s-1]
+  }
   
   V.bar.ext       = solve(t(X.bv)%*%diag(1/(lambda.posterior.draws[,s]))%*%X.bv + solve(V.prior))
   A.bar.ext       = V.bar.ext%*%(t(X.bv)%*%diag(1/(lambda.posterior.draws[,s]))%*%Y.bv + solve(V.prior)%*%A.prior)
