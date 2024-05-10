@@ -680,7 +680,7 @@ for(s in 1:S){
   
 
 round(apply(A.posterior.draws[,,s], 1:2, mean),2)
-round(apply(Sigma.posterior.draws[,,s], 1:2, mean),2) * round(mean(lambda.posterior.draws[,51:100]),2)
+round(apply(Sigma.posterior.draws[,,s], 1:2, mean),2) * round(mean(lambda.posterior.draws[,s]),2)
 round(mean(lambda.posterior.draws[,s]),2)
 ```
 
