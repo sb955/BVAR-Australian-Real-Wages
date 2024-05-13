@@ -491,7 +491,7 @@ round(Sigma.E, 3)
 
 The estimated parameters are close to the expected values of 1 for a 1-period memory of a random process.
 
-```{r Posterior function}
+```{r Posterior function, echo=TRUE}
 #| fold: true
 
 posterior <- function(Y, X, p, S){
@@ -714,15 +714,15 @@ posterior_t <- function(Y, X, p, S){
 }
 
 
-post.t.stats <- posterior_t(Y.bv, X.bv, 1, 100)
+stats = posterior_t(Y.bv, X.bv, 1, 100)
 
-round(apply(post.t.stats[[1]], 1:2, mean),2)
+round(apply(.stats[[1]], 1:2, mean),2)
 
-round(apply(post.t.stats[[2]], 1:2, mean),2)
+round(apply(stats[[2]], 1:2, mean),2)
 
-round(mean(post.t.stats[[3]]),2)
+round(mean(stats[[3]]),2)
 
-round(apply(post.t.stats[[2]], 1:2, mean),2) * round(mean(post.t.stats[[3]]),2)
+round(apply(stats[[2]], 1:2, mean),2) * round(mean(stats[[3]]),2)
 
 ```
 
@@ -805,7 +805,7 @@ S.bar.inv   = solve(S.bar)
 
 
 ```{r forecast functions, echo=TRUE}
-forecasts <- function(Y, A.posterior.draws, Sigma.posterior, h, S, p){
+forecasts <- function(Y, A.posterior, Sigma.posterior, h, S, p){
   N = ncol(Y)
   Y.h         = array(NA,c(h,N,S))
   for (s in 1:S){
@@ -815,7 +815,7 @@ forecasts <- function(Y, A.posterior.draws, Sigma.posterior, h, S, p){
 
     for (i in 1:h){
       x.T         = c(1,as.vector(t(x.Ti)))
-      Y.h[i,,s]   = rmvnorm(1, mean = x.T%*%A.posterior.draws[,,s], sigma=Sigma.posterior[,,s])
+      Y.h[i,,s]   = rmvnorm(1, mean = x.T%*%A.posterior[,,s], sigma=Sigma.posterior[,,s])
       
       if (p==1){
         x.Ti        = Y.h[i,,s]
@@ -833,8 +833,11 @@ forecasts <- function(Y, A.posterior.draws, Sigma.posterior, h, S, p){
 
 ```{r Call functions, echo=TRUE}
 post.results <- posterior(Y, X, 4, 100)
-post.t.results <- posterior_t(Y, X, 4, 100)
+
 forecasts_norm <- forecasts(Y, post.results$A.posterior, post.results$Sigma.posterior, 8, 100, 4)
+
+post.t.results <- posterior_t(Y, X, 4, 100)
+
 forecasts_t <- forecasts(Y, post.t.results$A.posterior.draws, post.t.results$Sigma.posterior.draws, 8, 100, 4)
 ```
 
@@ -870,5 +873,6 @@ forecast.plots(forecasts_norm$Y.h, forecasts_t$Y.h, y)
 ```
 
 We observe the real wages to stabilize in the future, but not to reach levels of the pre-Covid area.
+The mean predictions for normal distributed errors and t-distributed errors mostly align, whereas the intervals of the t-distributed model show a wider spread.
 
 # References {.unnumbered}
