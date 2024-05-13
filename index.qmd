@@ -312,7 +312,7 @@ library(MCMCpack)
 As an easy introduction, a bivariat random walk model will serve as a baseline model to apply the theorie.
 
 ```{r}
-set.seed(9999)
+set.seed(234786)
 rw_data = data.frame(matrix(nrow=100, ncol=2))
 rw_data[,1] = cumsum(rnorm(100,0,1))
 rw_data[,2] = cumsum(rnorm(100,0,1))
@@ -692,10 +692,10 @@ posterior_t <- function(Y, X, p, S){
     A.posterior.draws[,,s] = matrix(mvtnorm::rmvnorm(1, mean=as.vector(A.bar.ext), sigma = Sigma.posterior.draws[,,s] %x% V.bar.ext), ncol=N)
     
     for (x in 1:t){
-      u_t <- Y[x,] - t(X[x,]) %*% A.posterior.draws[,,s]
-      lambda = rinvgamma(1, N+lambda.nu.prior, lambda.nu.prior + u_t %*% Sigma.posterior.draws[,,s] %*% t(u_t) )
-      lambda.posterior.draws[x,s] <- lambda
-    }
+    u_t <- Y[x,] - t(X[x,]) %*% A.posterior.draws[,,s]
+    lambda = rinvgamma(1, N+lambda.nu.prior, lambda.nu.prior + u_t %*% Sigma.posterior.draws[,,s] %*% t(u_t) )
+    lambda.posterior.draws[x,s] <- lambda
+  }
     
   }  
   
@@ -707,15 +707,23 @@ posterior_t <- function(Y, X, p, S){
   # )
   # return(means)
   #return(list(A.posterior.draws[,,s], Sigma.posterior.draws[,,s]))
-  return(list(A.posterior.draws = A.posterior.draws, Sigma.posterior.draws = Sigma.posterior.draws))
+    pris = (list(A.posterior.draws = A.posterior.draws, 
+               Sigma.posterior.draws = Sigma.posterior.draws,
+               lambda.posterior.draws=lambda.posterior.draws))
 
 }
 
 
 post.t.stats <- posterior_t(Y.bv, X.bv, 1, 100)
 
-round(apply(post.t.stats$A.posterior.draws, 1:2, mean),2)
-round(apply(post.t.stats$Sigma.posterior.draws, 1:2, mean),2)
+round(apply(post.t.stats[[1]], 1:2, mean),2)
+
+round(apply(post.t.stats[[2]], 1:2, mean),2)
+
+round(mean(post.t.stats[[3]]),2)
+
+round(apply(post.t.stats[[2]], 1:2, mean),2) * round(mean(post.t.stats[[3]]),2)
+
 ```
 
 One can observe, that the means represent exactly the expected values, whereas the variances lie a bit further apart from 1.
@@ -726,20 +734,27 @@ One can observe, that the means represent exactly the expected values, whereas t
 #empty
 ```
 
-### Real Wage data forecasts
+# Real Wage data forecasts
 
 ```{r Model set-up  , echo=FALSE, results='hide'}
 y <- ts(df, start=c(1998, 4), frequency=4)
-N = ncol(y)
+#N = ncol(y)
 p       = 4
-K       = 1 + p*N
-S       = 100
-h       = 8
+#K       = 1 + p*N
+#S       = 100
+#h       = 8
 Y       = ts(y[(p+1):nrow(y),])
 X       = matrix(1,nrow(Y),1)
 for (i in 1:p){
   X     = cbind(X,y[(p+1):nrow(y)-i,])
 }
+
+
+h       = 8
+S       = 100
+K = 1 + (p*N)
+N = ncol(Y)
+
 
 A.hat       = solve(t(X)%*%X)%*%t(X)%*%Y
 Sigma.hat   = t(Y-X%*%A.hat)%*%(Y-X%*%A.hat)/nrow(Y)
@@ -765,29 +780,6 @@ A.bar       = V.bar%*%(t(X)%*%Y + diag(1/diag(V.prior))%*%A.prior)
 nu.bar      = nrow(Y) + nu.prior
 S.bar       = S.prior + t(Y)%*%Y + t(A.prior)%*%diag(1/diag(V.prior))%*%A.prior - t(A.bar)%*%V.bar.inv%*%A.bar
 S.bar.inv   = solve(S.bar)
-
-# # posterior draws 
-# Sigma.posterior   = rWishart(S, df=nu.bar, Sigma=S.bar.inv)
-# Sigma.posterior   = apply(Sigma.posterior,3,solve)
-# Sigma.posterior   = array(Sigma.posterior,c(N,N,S))
-# A.posterior       = array(rnorm(prod(c(dim(A.bar),S))),c(dim(A.bar),S))
-# L                 = t(chol(V.bar))
-# for (s in 1:S){
-#   A.posterior[,,s]= A.bar + L%*%A.posterior[,,s]%*%chol(Sigma.posterior[,,s])
-# }
-# 
-# ### Simulate draws from predictive density
-# Y.h         = array(NA,c(h,N,S))
-# 
-# for (s in 1:S){
-#   x.Ti        = Y[(nrow(Y)-h+1):nrow(Y),]
-#   x.Ti        = x.Ti[4:1,]
-#   for (i in 1:h){
-#     x.T         = c(1,as.vector(t(x.Ti)))
-#     Y.h[i,,s]   = rmvnorm(1, mean = x.T%*%A.posterior[,,s], sigma=Sigma.posterior[,,s])
-#     x.Ti        = rbind(Y.h[i,,s],x.Ti[1:3,])
-#   }
-# }
 
 ```
 
@@ -816,9 +808,6 @@ S.bar.inv   = solve(S.bar)
 forecasts <- function(Y, A.posterior.draws, Sigma.posterior, h, S, p){
   N = ncol(Y)
   Y.h         = array(NA,c(h,N,S))
-  #point.f = matrix(NA, dim = c(h, N))  
-  #interval.f = array(NA, dim = c(h, N, 2)) 
-  
   for (s in 1:S){
     x.Ti        = Y[(nrow(Y)-h+1):nrow(Y),]
     x.Ti        = x.Ti[p:1,] 
@@ -849,8 +838,8 @@ forecasts_norm <- forecasts(Y, post.results$A.posterior, post.results$Sigma.post
 forecasts_t <- forecasts(Y, post.t.results$A.posterior.draws, post.t.results$Sigma.posterior.draws, 8, 100, 4)
 ```
 
-```{r}
-mcxs5_shade <- rgb(220/255, 128/255, 128/255, alpha = 0.2)
+```{r }
+mcxs5_shade <- rgb(240/255, 128/255, 128/255, alpha = 0.4)
 par(mfrow = c(5, 2), mar = c(2, 2, 1, 1), oma = c(0, 0, 2, 0))
 forecast.plots <- function(Y.h1, Y.h2, y){
   for (x in 1:10) {
@@ -878,8 +867,6 @@ forecast.plots <- function(Y.h1, Y.h2, y){
 }
 
 forecast.plots(forecasts_norm$Y.h, forecasts_t$Y.h, y)
-
-
 ```
 
 We observe the real wages to stabilize in the future, but not to reach levels of the pre-Covid area.
