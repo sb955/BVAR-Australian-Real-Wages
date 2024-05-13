@@ -701,19 +701,21 @@ posterior_t <- function(Y, X, p, S){
   
   # means = list(
   #     A.posterior.means        = round(apply(A.posterior.draws[,,s], 1:2, mean),2),
-  #     #Sigma.posterior.means    = round(apply(Sigma.posterior.draws[,,s], 1:2, mean),2) ,
-  #     #lambda.means             = round(mean(lambda.posterior.draws[,s]),2),
-  #     #lambdasigma.means        = round(apply(Sigma.posterior.draws[,,s], 1:2, mean),2) * (round(mean(lambda.posterior.draws[,s]),2)* diag(2))
+  #     Sigma.posterior.means    = round(apply(Sigma.posterior.draws[,,s], 1:2, mean),2) ,
+  #     lambda.means             = round(mean(lambda.posterior.draws[,s]),2),
+  #     lambdasigma.means        = round(apply(Sigma.posterior.draws[,,s], 1:2, mean),2) * (round(mean(lambda.posterior.draws[,s]),2)* diag(2))
   # )
   # return(means)
   #return(list(A.posterior.draws[,,s], Sigma.posterior.draws[,,s]))
-  list(A.posterior.draws = A.posterior.draws, Sigma.posterior.draws = Sigma.posterior.draws)
+  return(list(A.posterior.draws = A.posterior.draws, Sigma.posterior.draws = Sigma.posterior.draws))
 
 }
 
 
-#posterior_t(Y.bv, X.bv, 1, 100)
-#wage_data_post_t <- posterior_t(Y, X, 4, 100)
+post.t.stats <- posterior_t(Y.bv, X.bv, 1, 100)
+
+round(apply(post.t.stats$A.posterior.draws, 1:2, mean),2)
+round(apply(post.t.stats$Sigma.posterior.draws, 1:2, mean),2)
 ```
 
 One can observe, that the means represent exactly the expected values, whereas the variances lie a bit further apart from 1.
@@ -764,49 +766,49 @@ nu.bar      = nrow(Y) + nu.prior
 S.bar       = S.prior + t(Y)%*%Y + t(A.prior)%*%diag(1/diag(V.prior))%*%A.prior - t(A.bar)%*%V.bar.inv%*%A.bar
 S.bar.inv   = solve(S.bar)
 
-# posterior draws 
-Sigma.posterior   = rWishart(S, df=nu.bar, Sigma=S.bar.inv)
-Sigma.posterior   = apply(Sigma.posterior,3,solve)
-Sigma.posterior   = array(Sigma.posterior,c(N,N,S))
-A.posterior       = array(rnorm(prod(c(dim(A.bar),S))),c(dim(A.bar),S))
-L                 = t(chol(V.bar))
-for (s in 1:S){
-  A.posterior[,,s]= A.bar + L%*%A.posterior[,,s]%*%chol(Sigma.posterior[,,s])
-}
-
-### Simulate draws from predictive density
-Y.h         = array(NA,c(h,N,S))
-
-for (s in 1:S){
-  x.Ti        = Y[(nrow(Y)-h+1):nrow(Y),]
-  x.Ti        = x.Ti[4:1,]
-  for (i in 1:h){
-    x.T         = c(1,as.vector(t(x.Ti)))
-    Y.h[i,,s]   = rmvnorm(1, mean = x.T%*%A.posterior[,,s], sigma=Sigma.posterior[,,s])
-    x.Ti        = rbind(Y.h[i,,s],x.Ti[1:3,])
-  }
-}
+# # posterior draws 
+# Sigma.posterior   = rWishart(S, df=nu.bar, Sigma=S.bar.inv)
+# Sigma.posterior   = apply(Sigma.posterior,3,solve)
+# Sigma.posterior   = array(Sigma.posterior,c(N,N,S))
+# A.posterior       = array(rnorm(prod(c(dim(A.bar),S))),c(dim(A.bar),S))
+# L                 = t(chol(V.bar))
+# for (s in 1:S){
+#   A.posterior[,,s]= A.bar + L%*%A.posterior[,,s]%*%chol(Sigma.posterior[,,s])
+# }
+# 
+# ### Simulate draws from predictive density
+# Y.h         = array(NA,c(h,N,S))
+# 
+# for (s in 1:S){
+#   x.Ti        = Y[(nrow(Y)-h+1):nrow(Y),]
+#   x.Ti        = x.Ti[4:1,]
+#   for (i in 1:h){
+#     x.T         = c(1,as.vector(t(x.Ti)))
+#     Y.h[i,,s]   = rmvnorm(1, mean = x.T%*%A.posterior[,,s], sigma=Sigma.posterior[,,s])
+#     x.Ti        = rbind(Y.h[i,,s],x.Ti[1:3,])
+#   }
+# }
 
 ```
 
 ```{r Forecast plots, echo=FALSE, results='hide'}
 
-x_dates <- format(as.yearqtr(c(dates, seq(tail(dates, 1), by = "quarter", length.out = h + 1)[-1])), "%Y Q%q")
-par(mfrow = c(5, 2), mar = c(2, 2, 1, 1), oma = c(0, 0, 2, 0))
-
-for (i in 1:10) {
-    point.f <- apply(Y.h[, i, ], 1, mean)
-    interval.f <- apply(Y.h[, i, ], 1, hdi, credMass = 0.90)
-    combined_data <- c(y[, i], point.f)
-    range_val <- range(combined_data, interval.f)
-
-    plot(1:(nrow(y) + h), combined_data, type = "l", ylim = range_val, xlab = "", ylab = "", col = mcxs2, lwd = 2, main = paste("Forecast", var_names[i]), bty = "n", xaxt = "n")
-    axis(1, at = 1:(nrow(y) + h), labels= x_dates, cex.axis = 0.7, tck = 0)
-    abline(v = nrow(y)+1, col = mcxs1)  
-    
-    polygon(c((nrow(y)+1):(nrow(y)+h), rev((nrow(y)+1):(nrow(y)+h))),
-            c(interval.f[1, ], rev(interval.f[2, ])), col = mcxs2.shade1, border = mcxs1.shade1)
-}
+# x_dates <- format(as.yearqtr(c(dates, seq(tail(dates, 1), by = "quarter", length.out = h + 1)[-1])), "%Y Q%q")
+# par(mfrow = c(5, 2), mar = c(2, 2, 1, 1), oma = c(0, 0, 2, 0))
+# 
+# for (i in 1:10) {
+#     point.f <- apply(Y.h[, i, ], 1, mean)
+#     interval.f <- apply(Y.h[, i, ], 1, hdi, credMass = 0.90)
+#     combined_data <- c(y[, i], point.f)
+#     range_val <- range(combined_data, interval.f)
+# 
+#     plot(1:(nrow(y) + h), combined_data, type = "l", ylim = range_val, xlab = "", ylab = "", col = mcxs2, lwd = 2, main = paste("Forecast", var_names[i]), bty = "n", xaxt = "n")
+#     axis(1, at = 1:(nrow(y) + h), labels= x_dates, cex.axis = 0.7, tck = 0)
+#     abline(v = nrow(y)+1, col = mcxs1)  
+#     
+#     polygon(c((nrow(y)+1):(nrow(y)+h), rev((nrow(y)+1):(nrow(y)+h))),
+#             c(interval.f[1, ], rev(interval.f[2, ])), col = mcxs2.shade1, border = mcxs1.shade1)
+# }
 ```
 
 
