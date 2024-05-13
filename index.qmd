@@ -351,6 +351,7 @@ Y=XA + E\\
 Y|X,A,\Sigma &\sim MN_{T \times N} (XA, \Sigma, I_T).
 \end{align}
 ```
+
 ```{r Base model set-up  , echo=TRUE, results='hide'}
 y.bv <- ts(rw_data,  frequency=1)
 N = ncol(y.bv)
@@ -505,6 +506,46 @@ round(Sigma.E, 3)
 
 The estimated parameters are close to the expected values of 1 for a 1-period memory of a random process.
 
+```{r}
+#| code-fold: true
+posterior <- function(Y, X, p, S){
+  N = ncol(Y.bv)
+  #S = 100
+  
+  #set kappas
+  kappa.1 <- 0.02^2
+  kappa.2 <-100
+  K = 1 + (p*N)
+  
+  #minnesota priors  
+  A.prior     = matrix(0,nrow(A.hat),ncol(A.hat))
+  A.prior[2:(N+1),] = diag(N)
+  V.prior     = diag(c(kappa.2,kappa.1*((1:p)^(-2))%x%rep(1,N)))
+  S.prior     = diag(diag(Sigma.hat))
+  nu.prior    = N+1
+  
+  #posterior draws
+  V.bar.inv   = t(X.bv)%*%X.bv + diag(1/diag(V.prior))
+  V.bar       = solve(V.bar.inv)
+  A.bar       = V.bar%*%(t(X.bv)%*%Y.bv + diag(1/diag(V.prior))%*%A.prior)
+  nu.bar      = nrow(Y.bv) + nu.prior
+  S.bar       = S.prior + t(Y.bv)%*%Y.bv + t(A.prior)%*%diag(1/diag(V.prior))%*%A.prior - t(A.bar)%*%V.bar.inv%*%A.bar
+  S.bar.inv   = solve(S.bar)
+ 
+  Sigma.posterior   = rWishart(S, df=nu.bar, Sigma=S.bar.inv)
+  Sigma.posterior   = apply(Sigma.posterior,3,solve)
+  Sigma.posterior   = array(Sigma.posterior,c(N,N,S))
+  A.posterior       = array(rnorm(prod(c(dim(A.bar),S))),c(dim(A.bar),S))
+  L                 = t(chol(V.bar))
+  for (s in 1:S){
+    A.posterior[,,s]= A.bar + L%*%A.posterior[,,s]%*%chol(Sigma.posterior[,,s])
+  }
+  
+
+}
+  
+```
+
 # Model extension: T-Distributed errors
 
 An interesting specification in our model of forecasting real wages is the introduction of t-Distributed error terms. This specification is particularly notable because the t-distribution, with its heavier tails, may better account for potential outliers and the distributional characteristics of the time series data. This approach aims to enhance the model's robustness and accuracy in capturing the variability in real wage changes.
@@ -612,225 +653,95 @@ The kernel of the joint posterior follows an inverse gamma 2 distribution.
 p(\lambda_t|Y,X,A,\Sigma) &\sim \operatorname{IG2}(N+\nu_{\lambda}, \nu_{\lambda}+\epsilon_t'\Sigma^{-1}\epsilon_t)
 \end{align}
 ```
+
 ```{r echo=TRUE}
-set.seed(9999)
-rw_data = data.frame(matrix(nrow=100, ncol=2))
-rw_data[,1] = cumsum(rnorm(100,0,1))
-rw_data[,2] = cumsum(rnorm(100,0,1))
-#plot(rw_data[,1], type='l', ylim=c(min(rw_data), max(rw_data)), col=mcxs1, ylab='', xlab='', main='Bivariate Random Walk')
-#lines(rw_data[,2], col=mcxs, ylab='', xlab='')
-
-
-y.bv <- ts(rw_data,  frequency=1)
-N = ncol(y.bv)
-p       = 1
-S       = 100
-h       = 8
-Y.bv       = ts(y.bv[(p+1):nrow(y.bv),])
-X.bv      = matrix(1,nrow(Y.bv),1)
-for (i in 1:p){
-  X.bv     = cbind(X.bv,y.bv[(p+1):nrow(y.bv)-i,])
+posterior_t <- function(Y, X, p, S){
+  
+  #p=1
+  #S=1000
+  
+  A.hat       = solve(t(X)%*%X)%*%t(X)%*%Y
+  Sigma.hat   = t(Y-X%*%A.hat)%*%(Y-X%*%A.hat)/nrow(Y)
+  
+  N = ncol(Y)
+  t <- NROW(Y)
+  kappa.1 <- 0.02^2
+  kappa.2 <-100
+  K = 1 + (p*N)
+  
+  A.prior     = matrix(0, K , N)
+  A.prior[2:(N+1),] = diag(N)
+  V.prior     = diag(c(kappa.2,kappa.1*((1:p)^(-2))%x%rep(1,N)))
+  S.prior     = diag(diag(Sigma.hat))
+  nu.prior    = N+1
+  lambda.nu.prior = 5
+  
+  
+  
+  lambda.0 = rinvgamma(t, lambda.nu.prior/2, lambda.nu.prior/2)
+  
+  
+  Sigma.posterior.draws <- array(dim = c(N, N, S))
+  A.posterior.draws <- array(dim = c(K, N, S))
+  lambda.posterior.draws <- array(NA,c(t,S))
+  
+  
+  for (s in 1:S){
+    if (s == 1) {
+      lambda.s = lambda.0
+    } else {
+      lambda.s    = lambda.posterior.draws[,s-1]
+    }
+    Omega = (diag(lambda.s))
+    Omega.inv = diag(1/lambda.s)
+    
+    V.bar.ext       = solve(t(X)%*% Omega.inv%*%X + solve(V.prior))
+    A.bar.ext       = V.bar.ext%*%(t(X)%*% Omega.inv%*%Y + solve(V.prior)%*%A.prior)
+    nu.bar.ext      = t + nu.prior
+    S.bar.ext       = S.prior + t(Y)%*% Omega.inv%*%Y + t(A.prior)%*%solve(V.prior)%*%A.prior - t(A.bar.ext)%*%solve(V.bar.ext)%*%A.bar.ext
+    S.bar.ext.inv   = solve(S.bar.ext)
+    
+    Sigma.inv.draw = rWishart(1, nu.bar.ext, S.bar.ext.inv)[,,1]
+    Sigma.posterior.draws[,,s] = solve(Sigma.inv.draw)
+    A.posterior.draws[,,s] = matrix(mvtnorm::rmvnorm(1, mean=as.vector(A.bar.ext), sigma = Sigma.posterior.draws[,,s] %x% V.bar.ext), ncol=N)
+    
+    for (x in 1:t){
+      u_t <- Y[x,] - t(X[x,]) %*% A.posterior.draws[,,s]
+      lambda = rinvgamma(1, N+lambda.nu.prior, lambda.nu.prior + u_t %*% Sigma.posterior.draws[,,s] %*% t(u_t) )
+      lambda.posterior.draws[x,s] <- lambda
+    }
+    
+  }  
+  
+  means = list(
+      A.posterior.means        = round(apply(A.posterior.draws[,,s], 1:2, mean),2),
+      Sigma.posterior.means    = round(apply(Sigma.posterior.draws[,,s], 1:2, mean),2) ,
+      lambda.means             = round(mean(lambda.posterior.draws[,s]),2),
+      lambdasigma.means        = round(apply(Sigma.posterior.draws[,,s], 1:2, mean),2) * (round(mean(lambda.posterior.draws[,s]),2)* diag(2))     
+  )
+  return(means)
 }
 
-A.hat       = solve(t(X.bv)%*%X.bv)%*%t(X.bv)%*%Y.bv
-Sigma.hat   = t(Y.bv-X.bv%*%A.hat)%*%(Y.bv-X.bv%*%A.hat)/nrow(Y.bv)
 
-t <- NROW(Y.bv)
-kappa.1 <- 0.02^2
-kappa.2 <-100
-K = 1 + (p*N)
-
-A.prior     = matrix(0, K , N)
-A.prior[2:(N+1),] = diag(N)
-V.prior     = diag(c(kappa.2,kappa.1*((1:p)^(-2))%x%rep(1,N)))
-S.prior     = diag(diag(Sigma.hat))
-nu.prior    = N+1
-lambda.nu.prior = 5
-
-#initialize
-lambda.0 = rinvgamma(t, lambda.nu.prior/2, lambda.nu.prior/2)
-
-Sigma.posterior.draws <- array(dim = c(N, N, S))
-A.posterior.draws <- array(dim = c(K, N, S))
-lambda.posterior.draws = array(NA,c(t,S+1))
-
-for(s in 1:S){
-  if (s == 1) {
-    lambda.s = lambda.0
-  } else {
-    lambda.s    = lambda.posterior.draws[,s-1]
-  }
-  
-  V.bar.ext       = solve(t(X.bv)%*%diag(1/(lambda.posterior.draws[,s]))%*%X.bv + solve(V.prior))
-  A.bar.ext       = V.bar.ext%*%(t(X.bv)%*%diag(1/(lambda.posterior.draws[,s]))%*%Y.bv + solve(V.prior)%*%A.prior)
-  nu.bar.ext      = t + nu.prior
-  S.bar.ext       = S.prior + t(Y.bv)%*%diag(1/(lambda.posterior.draws[,s]))%*%Y.bv + t(A.prior)%*%solve(V.prior)%*%A.prior - t(A.bar.ext)%*%solve(V.bar.ext)%*%A.bar.ext
-  
-  
-  Sigma.inv.draw = rWishart(1, nu.bar.ext, S.bar.ext.inv)[,,1]
-  Sigma.posterior.draws[,,s] = solve(Sigma.inv.draw)
-  A.posterior.draws[,,s] = matrix(mvtnorm::rmvnorm(1, mean=as.vector(A.bar.ext), sigma = Sigma.posterior.draws[,,s] %x% V.bar.ext), ncol=N)
-  
-  for (x in 1:t){
-    u_t <- Y.bv[x,] - t(X.bv[x,]) %*% A.posterior.draws[,,s]
-    lambda = rinvgamma(1, N+lambda.nu.prior, lambda.nu.prior + u_t %*% Sigma.posterior.draws[,,s] %*% t(u_t) )
-    lambda.posterior.draws[x,s] <- lambda
-  }
-} 
-  
-
-round(apply(A.posterior.draws[,,s], 1:2, mean),2)
-round(apply(Sigma.posterior.draws[,,s], 1:2, mean),2) * round(mean(lambda.posterior.draws[,s]),2)
-round(mean(lambda.posterior.draws[,s]),2)
+posterior_t(Y.bv, X.bv, 1, 100)
 ```
 
 One can observe, that the means represent exactly the expected values, whereas the variances lie a bit further apart from 1.
 
 #### Include $\nu$ sampling
 
-```{r echo=TRUE, }
-#initialize chain
-library(MCMCpack)
-set.seed(9999)
-rw_data = data.frame(matrix(nrow=100, ncol=2))
-rw_data[,1] = cumsum(rnorm(100,0,1))
-rw_data[,2] = cumsum(rnorm(100,0,1))
-
-
-y.bv <- ts(rw_data,  frequency=1)
-N = ncol(y.bv)
-p       = 1
-S       = 100
-h       = 8
-Y.bv       = ts(y.bv[(p+1):nrow(y.bv),])
-X.bv      = matrix(1,nrow(Y.bv),1)
-for (i in 1:p){
-  X.bv     = cbind(X.bv,y.bv[(p+1):nrow(y.bv)-i,])
-}
-
-A.hat       = solve(t(X.bv)%*%X.bv)%*%t(X.bv)%*%Y.bv
-Sigma.hat   = t(Y.bv-X.bv%*%A.hat)%*%(Y.bv-X.bv%*%A.hat)/nrow(Y.bv)
-
-t <- NROW(Y.bv)
-kappa.1 <- 0.02^2
-kappa.2 <-100
-K = 1 + (p*N)
-nu=5
-
-A.prior     = matrix(0, K , N)
-A.prior[2:(N+1),] = diag(N)
-V.prior     = diag(c(kappa.2,kappa.1*((1:p)^(-2))%x%rep(1,N)))
-S.prior     = diag(diag(Sigma.hat))
-nu.prior    = N+1
-lambda.nu.prior = 3.2
-
-
-#initialize chain
-lambda.init = rinvgamma(t, lambda.nu.prior/2, lambda.nu.prior/2)
-omega.init = diag(lambda.init)
-omega.init.inv = solve(omega.init)
-
-
-Sigma.posterior.draws <- array(dim = c(N, N, S))
-A.posterior.draws <- array(dim = c(K, N, S))
-Omega.posterior.draws <- array(dim=c(t,t,S+1))
-Omega.posterior.draws[,,1] <- omega.init
-
-#store_nu <- numeric(S)
-lambda.posterior.draws = array(NA,c(t,S))
-lambda.s.posterior = array(NA,c(t,S))
-
-#nudraws
-nu.draws = array(NA,S)
-nuub = 30
-countnu = 0
-
-for(s in 1:S){
-  Omega.inv_s     = solve(Omega.posterior.draws[,,s])
-  
-  V.bar.ext       = solve(t(X.bv)%*%Omega.inv_s%*%X.bv + solve(V.prior))
-  A.bar.ext       = V.bar.ext%*%(t(X.bv)%*%Omega.inv_s%*%Y.bv + solve(V.prior)%*%A.prior)
-  nu.bar.ext      = t + nu.prior
-  S.bar.ext       = S.prior + t(Y.bv)%*%Omega.inv_s%*%Y.bv + t(A.prior)%*%solve(V.prior)%*%A.prior - t(A.bar.ext)%*%solve(V.bar.ext)%*%A.bar.ext
-  S.bar.ext       = (S.bar.ext %*% t(S.bar.ext))/2
-  #S.bar.ext.inv   = solve(S.bar.ext)
-  #L               = t(chol(V.bar.ext.inv))
-  
-  Sigma.posterior.draws[,,s] = rWishart(1, nu.bar.ext, solve(S.bar.ext))[,,1]  #solve(S.bar.ext)??
-  Sigma.posterior.draws[,,s] = solve(Sigma.posterior.draws[,,s])
-  A.posterior.draws[,,s] = matrix(mvtnorm::rmvnorm(1, mean=as.vector(A.bar.ext), sigma = Sigma.posterior.draws[,,s] %x% V.bar.ext), ncol=N)
-  
-  U_s <- Y.bv - X.bv %*% A.posterior.draws[,,s]
-  for (x in 1:t){
-    lambda.s.posterior[,s] = lambda.nu.prior + t((U_s)[x,])%*%Sigma.posterior.draws[,,s]%*%(U_s)[x,]
-  }
-  
-  lambda.v.posterior = N + lambda.nu.prior
-  
-  for (x in 1:t){
-    lambda.posterior.draws[x,s] = rinvgamma(1,lambda.v.posterior/2, lambda.s.posterior[x,s]/2)
-  }
-  
-  Omega.posterior.draws[,,s+1] = diag(lambda.posterior.draws[,s])
-  
-  
-  binary <- 1
-  sum1 <- sum(log(lambda.posterior.draws[,s]))
-  sum2 <- sum(1/lambda.posterior.draws[,s])
-  
-  funct.nu <- function(x) {
-    t * (x/2 * log(x/2) - lgamma(x/2)) - (x/2 + 1) * sum1 - x/2 * sum2
-  }
-  #first derivative
-  f1 <- function(x) {
-    t/2 * (log(x/2) + 1 - digamma(x/2)) - 0.5 * (sum1 + sum2)
-  }
-  #second derivative
-  f2 <- function(x) {
-    t/(2*x) - t/4 * trigamma(x/2)
-  }
-  
-  err_nu <- 1
-  nut <- lambda.nu.prior
-  while (abs(err_nu) > 10^(-5)) {
-    err_nu <- f1(nut)
-    Knu <- -f2(nut)
-    nut <- nut + err_nu / Knu
-    if (nut < 2) {
-      nut <- 5
-      Knu <- -f2(nut)
-      break
-    }
-  }
-  
-  sqrtDnu <- sqrt(1/Knu)
-  nuc <- rnorm(1, mean = nut, sd = sqrtDnu)
-  
-  if (nuc > 2 && nuc < nuub) {
-    alp_MH <- exp(funct.nu(nuc) - funct.nu(lambda.nu.prior)) * dnorm(lambda.nu.prior, mean = nut, sd = sqrtDnu) / dnorm(nuc, mean = nut, sd = sqrtDnu)
-    if (alp_MH > runif(1)) {
-      nu.draws[s] <- nuc
-      binary <- 1
-    }
-  }
-  list(lambda.nu.prior = lambda.nu.prior, binary = binary, funct.nu = funct.nu)
-} 
-
-
-round(apply(A.posterior.draws[,,s], 1:2, mean),2)
-round(apply(Sigma.posterior.draws[,,s], 1:2, mean),2) * round(mean(lambda.posterior.draws[,51:100]),2)
-round(mean(lambda.posterior.draws[,s]),2)
-round(mean(nu.draws[s]),2)
-
+```{r nu_sampling echo=TRUE, }
+#empty
 ```
 
 The results vary a lot when adjusting the prior of $\lambda_{nu}$.
 
-#### Further research
+#### Forecasts
 
 Running the code with 100 samples is already very computational intensive. I will be necessary to apply tools by @chan2020large to reduce computational intensity.
 
 A grid search search for the prior of $\lambda_{\nu}$, since the models parameters explode for guesses outside a specific range.
+
 
 ### Real Wage data forecasts
 
