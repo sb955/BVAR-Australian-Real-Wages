@@ -25,7 +25,7 @@
     "href": "index.html#data-extraction-and-transformation",
     "title": "Forecasting Australian Real Wages",
     "section": "Data extraction and transformation",
-    "text": "Data extraction and transformation\nSince the main indicators are based on quarterly data, all indicators are converted into quarterly time series.\nGiven that the extracted time series data for the production price index starts in 1998 Q4, this quarter will work as the starting date of the analysis."
+    "text": "Data extraction and transformation\nSince the main indicators are based on quarterly data, all indicators are converted into quarterly time series.\nGiven that the extracted time series data for the production price index starts in 1998 Q4, this quarter will work as the starting date of the analysis.\n\n\n# A tibble: 101 × 0"
   },
   {
     "objectID": "index.html#descriptive-analysis",
