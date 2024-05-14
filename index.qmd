@@ -136,7 +136,7 @@ log.unempl <- read_abs(series_id = "A84423092X") |>
   summarise(value = mean(value, na.rm = TRUE)) |> 
   mutate(log_value = log(value)) |> 
   select(log_value)  |> 
-  rename(log.unempl = log_value) #|>
+  rename(log.unempl = log_value) |>
   select(log.unempl)
 
 #Log of labor participation
@@ -313,9 +313,9 @@ To provide a straightforward introduction, we will utilize a bivariate random wa
 
 ```{r}
 set.seed(234786)
-rw_data = data.frame(matrix(nrow=100, ncol=2))
-rw_data[,1] = cumsum(rnorm(100,0,1))
-rw_data[,2] = cumsum(rnorm(100,0,1))
+rw_data = data.frame(matrix(nrow=1000, ncol=2))
+rw_data[,1] = cumsum(rnorm(1000,0,1))
+rw_data[,2] = cumsum(rnorm(1000,0,1))
 plot(rw_data[,1], type='l', ylim=c(min(rw_data), max(rw_data)), col=mcxs1, ylab='', xlab='', main='Bivariate Random Walk')
 lines(rw_data[,2], col=mcxs2, ylab='', xlab='')
 ```
@@ -352,7 +352,7 @@ y.bv <- ts(rw_data,  frequency=1)
 N = ncol(y.bv)
 p       = 1
 K       = 1 + p*N
-S       = 5000
+S       = 1000
 h       = 8
 Y.bv       = ts(y.bv[(p+1):nrow(y.bv),])
 X.bv      = matrix(1,nrow(Y.bv),1)
@@ -406,7 +406,7 @@ $$
 N = ncol(Y.bv)
     
 #set kapps
-kappa.1 <- 0.02^2
+kappa.1 <- 0.01^2
 kappa.2 <-100
 K = 1 + (p*N)
   
@@ -496,8 +496,8 @@ posterior <- function(Y, X, p, S){
   #S = 100
   
   #set kappas
-  kappa.1 <- 0.02^2
-  kappa.2 <-100
+  kappa.1   = 0.02^2
+  kappa.2   = 100
   K = 1 + (p*N)
   
   #minnesota priors  
@@ -639,7 +639,7 @@ $$
 
 Sampling algorithm:
 
-1. Draw $\Sigma^{(s)}$ from $ \operatorname{IW_N}(\bar{S},\bar{\nu})$.
+1. Draw $\Sigma^{(s)}$ from $\operatorname{IW_N}(\bar{S},\bar{\nu})$.
 
 2. Draw $A^{(s)}$ from $\operatorname{MN_{K\times N}}(\bar{A},\Sigma^{(s)},\bar{V})$.
 
@@ -647,7 +647,7 @@ Sampling algorithm:
 
 (Extension
 
-4. Draw ${\nu_{\lambda}^*}^{(s)}$ from $\operatorname{N}(\nu^{s-1}, var_{\nu}}$ applying a Metropolis-Hastings algorithm.)
+4. Draw ${\nu_{\lambda}^*}^{(s)}$ from $\operatorname{N}(\nu^{s-1}, var_{\nu})$ applying the Metropolis-Hastings algorithm.)
 
 ```{r echo=TRUE}
 posterior_t <- function(Y, X, p, S){
@@ -660,8 +660,8 @@ posterior_t <- function(Y, X, p, S){
   
   N = ncol(Y)
   t <- NROW(Y)
-  kappa.1 <- 0.02^2
-  kappa.2 <-100
+  kappa.1   = 0.02^2
+  kappa.2   = 100
   K = 1 + (p*N)
   
   A.prior     = matrix(0, K , N)
@@ -752,7 +752,7 @@ for (i in 1:p){
 }
 
 h       = 8
-S       = 100
+S       = 1000
 K = 1 + (p*N)
 N = ncol(Y)
 A.hat       = solve(t(X)%*%X)%*%t(X)%*%Y
@@ -811,33 +811,44 @@ forecasts <- function(Y, A.posterior, Sigma.posterior, h, S, p){
 
 
 ```{r Call functions, echo=TRUE}
-post.results <- posterior(Y, X, 4, 100)
+post.results <- posterior(Y, X, 4, 1000)
 
-forecasts_norm <- forecasts(Y, post.results$A.posterior, post.results$Sigma.posterior, 8, 100, 4)
+forecasts_norm <- forecasts(Y, post.results$A.posterior, post.results$Sigma.posterior, 8, 1000, 4)
 
-post.t.results <- posterior_t(Y, X, 4, 100)
+post.t.results <- posterior_t(Y, X, 4, 1000)
 
-forecasts_t <- forecasts(Y, post.t.results$A.posterior.draws, post.t.results$Sigma.posterior.draws, 8, 100, 4)
+forecasts_t <- forecasts(Y, post.t.results$A.posterior.draws, post.t.results$Sigma.posterior.draws, 8, 1000, 4)
 ```
 
 ```{r plots}
 mcxs5_shade <- rgb(240/255, 128/255, 128/255, alpha = 0.4)
+#par(mfrow = c(5, 2), mar = c(2, 2, 1, 1), oma = c(0, 0, 2, 0))
 par(mfrow = c(5, 2), mar = c(2, 2, 1, 1), oma = c(0, 0, 2, 0))
+x_dates <- format(as.yearqtr(c(dates, seq(tail(dates, 1), by = "quarter", length.out = h + 1)[-1])), "%Y Q%q")
+
+
+quarters <- format(as.yearqtr(x_dates), "%q")
+years <- format(as.yearqtr(x_dates), "%Y")
+
+unique_years <- unique(years)
+year_positions <- sapply(unique_years, function(y) mean(which(years == y)))
 
 forecast.plots <- function(Y.h1, Y.h2, y){
   for (x in 1:10) {
     point.f1 <- apply(Y.h1[, x, ], 1, mean)
-    interval.f1 <- apply(Y.h1[, x, ], 1, hdi, credMass = 0.90)
+    interval.f1 <- apply(Y.h1[, x, ], 1, hdi, credMass = 0.68)
     
     point.f2 <- apply(Y.h2[, x, ], 1, mean)
-    interval.f2 <- apply(Y.h2[, x, ], 1, hdi, credMass = 0.90)
+    interval.f2 <- apply(Y.h2[, x, ], 1, hdi, credMass = 0.68)
     
     combined_data1 <- c(y[, x], point.f1)
     range_val1 <- range(combined_data1, interval.f1)
 
     plot(1:(nrow(y) + h), combined_data1, type = "l", ylim = range_val1, xlab = "", ylab = "", col = mcxs2, lwd = 2, main = paste("Forecast", var_names[x]),  bty = "n", xaxt = "n")
     lines((nrow(y) + 1):(nrow(y) + h), point.f2, col = 'red', lwd = 2)
-    axis(1, at = 1:(nrow(y) + h), cex.axis = 0.7, tck = 0)
+    #axis(1, at = 1:(nrow(y) + h), cex.axis = 0.7, tck = 0)
+    axis(1, at = 1:(nrow(y) + h), labels = quarters, tick = TRUE, las = 2, cex.axis = 0.5)
+    axis(1, at = year_positions, labels = unique_years, tick = FALSE, line = -0.3, cex.axis = 0.4)
     
     
     abline(v = nrow(y)+1, col = mcxs1)  
@@ -845,7 +856,7 @@ forecast.plots <- function(Y.h1, Y.h2, y){
             c(interval.f2[1,], rev(interval.f2[2,])), col = mcxs5_shade, border =mcxs5_shade)
     polygon(c((nrow(y)+1):(nrow(y)+h), rev((nrow(y)+1):(nrow(y)+h))),
             c(interval.f1[1,], rev(interval.f1[2,])), col = mcxs2.shade1, border = mcxs2.shade1)
-    
+    legend("topleft", legend = c("Base", "T-Distr"), col = c(mcxs2, "red"), lwd = 2, cex = 0.6)
   }
 }
 
@@ -874,13 +885,15 @@ plot(1:(nrow(y) + h), combined_data1.wages, type = "l", ylim = range_val1.wages,
      main = paste("Forecast", var_names[1]), bty = "n", xaxt = "n")
 
 lines((nrow(y) + 1):(nrow(y) + h), point.f2.wages, col = 'red', lwd = 2)
-axis(1, at = 1:(nrow(y) + h), cex.axis = 0.7, tck = 0)
+axis(1, at = 1:(nrow(y) + h), labels = quarters, tick = TRUE, las = 2, cex.axis = 0.5)
+axis(1, at = year_positions, labels = unique_years, tick = FALSE, line = -0.1, cex.axis = 0.4)
 
 abline(v = nrow(y) + 1, col = mcxs1)
 polygon(c((nrow(y) + 1):(nrow(y) + h), rev((nrow(y) + 1):(nrow(y) + h))),
         c(interval.f2.wages[1, ], rev(interval.f2.wages[2, ])), col = mcxs5_shade, border = mcxs5_shade)
 polygon(c((nrow(y) + 1):(nrow(y) + h), rev((nrow(y) + 1):(nrow(y) + h))),
         c(interval.f1.wages[1, ], rev(interval.f1.wages[2, ])), col = mcxs2.shade1, border = mcxs2.shade1)
+legend("topleft", legend = c("Base", "T-Distr"), col = c(mcxs2, "red"), lwd = 2, cex = 0.6)
 ```
 
 ### Forecast horizons
@@ -925,7 +938,7 @@ plot_predictive_densities <- function(Y.h, distribution_name) {
 }
 
 # Set up the plotting window
-par(mfrow = c(2, 1), mar = c(2, 2, 1, 1), oma = c(0, 0, 2, 0))
+par(mfrow = c(1, 2), mar = c(2, 2, 1, 1), oma = c(0, 0, 2, 0))
 
 # Plot for normal distribution
 plot_predictive_densities(forecasts_norm$Y.h, "Normal")
@@ -933,6 +946,7 @@ plot_predictive_densities(forecasts_t$Y.h, "t-Distribution")
 ```
 
 ### Joint predictive density plots
+
 ```{r predictive density}
 Y.h_norm <- forecasts_norm$Y.h  
 Y.h_t <- forecasts_t$Y.h  
@@ -961,7 +975,7 @@ marginal.i1_t <- max(predictive.kernel_t$z) * marginal.i1_t / max(marginal.i1_t)
 marginal.i2_t <- apply(predictive.kernel_t$z, 2, sum)
 marginal.i2_t <- max(predictive.kernel_t$z) * marginal.i2_t / max(marginal.i2_t)
 
-par(mfrow = c(2, 1), mar = c(2, 2, 1, 1), oma = c(0, 0, 2, 0))
+par(mfrow = c(1, 2), mar = c(2, 2, 1, 1), oma = c(0, 0, 2, 0))
 
 f1_norm <- persp3D(x = predictive.kernel_norm$x, y = predictive.kernel_norm$y, z = predictive.kernel_norm$z, 
                    phi = 25, theta = 25, xlab = "\nReal Wages[t+1|t]", ylab = "\nReal Wages[t+2|t]", 
@@ -995,11 +1009,11 @@ persp3D(x = predictive.kernel_t$x, y = predictive.kernel_t$y, z = predictive.ker
 
 
 ### Forecast table for wage data 
+
 ```{r Forecast table}
 forecast.table2 <- function(Y.h1, Y.h2, y) {
   forecast_table <- data.frame(
     Period = integer(),
-    Variable = character(),
     Baseline_Forecast = numeric(),
     Extension_Forecast = numeric(),
     Baseline_Percentage_Change = numeric(),
@@ -1013,25 +1027,35 @@ forecast.table2 <- function(Y.h1, Y.h2, y) {
     point.f1.table2 <- apply(Y.h1[, x, ], 1, mean)
     point.f2.table2 <- apply(Y.h2[, x, ], 1, mean)
     
+    # Include period 0 (last observation from the data)
+    actual_value_0 <- y[nrow(y), x]
+    forecast_table <- rbind(forecast_table, data.frame(
+      Period = 0,
+      Baseline_Forecast = actual_value_0,
+      Extension_Forecast = actual_value_0,
+      Baseline_Percentage_Change = 0,
+      Extension_Percentage_Change = 0
+    ))
+    
     for (period in 1:n_periods) {
       # Calculate percentage changes for logged values
       actual_value <- y[nrow(y) - n_periods + period, x]
-      baseline_pct_change <- ((exp(point.f2.table2[period]) - exp(actual_value)) / exp(actual_value)) * 100
+      baseline_pct_change <- ((exp(point.f1.table2[period]) - exp(actual_value)) / exp(actual_value)) * 100
       extension_pct_change <- ((exp(point.f2.table2[period]) - exp(actual_value)) / exp(actual_value)) * 100
       
       forecast_table <- rbind(forecast_table, data.frame(
         Period = period,
-        #Variable = var_names[x],
         Baseline_Forecast = point.f1.table2[period],
         Extension_Forecast = point.f2.table2[period],
-        Baseline_Percentage_Change = baseline_pct_change,
-        Extension_Percentage_Change = extension_pct_change
+        Baseline_Percentage_Change = round(baseline_pct_change,2),
+        Extension_Percentage_Change = round(extension_pct_change,2)
       ))
     }
   }
   
   return(forecast_table)
 }
+
 forecast_table_out <- forecast.table2(forecasts_norm$Y.h, forecasts_t$Y.h, Y)
 print(forecast_table_out)
 ```
