@@ -704,7 +704,7 @@ posterior_t <- function(Y, X, p, S){
 
 stats = posterior_t(Y.bv, X.bv, 1, 100)
 
-round(apply(.stats[[1]], 1:2, mean),2)
+round(apply(stats[[1]], 1:2, mean),2)
 
 round(apply(stats[[2]], 1:2, mean),2)
 
@@ -814,6 +814,7 @@ forecasts_t <- forecasts(Y, post.t.results$A.posterior.draws, post.t.results$Sig
 ```{r }
 mcxs5_shade <- rgb(240/255, 128/255, 128/255, alpha = 0.4)
 par(mfrow = c(5, 2), mar = c(2, 2, 1, 1), oma = c(0, 0, 2, 0))
+
 forecast.plots <- function(Y.h1, Y.h2, y){
   for (x in 1:10) {
     point.f1 <- apply(Y.h1[, x, ], 1, mean)
@@ -844,6 +845,34 @@ forecast.plots(forecasts_norm$Y.h, forecasts_t$Y.h, y)
 
 We observe the real wages to stabilize in the future, but not to reach levels of the pre-Covid area.
 The mean predictions for normal distributed errors and t-distributed errors mostly align, whereas the intervals of the t-distributed model show a wider spread. 
+
+#### Real wages forecast
+
+```{r}
+par(mfrow = c(1, 1), mar = c(4, 4, 2, 1), oma = c(0, 0, 2, 0))
+
+point.f1.wages = apply(forecasts_norm$Y.h[,1,],1,mean)
+interval.f1.wages = apply(forecasts_norm$Y.h[,1,],1,hdi,credMass=0.68)
+
+point.f2.wages <- apply(forecasts_t$Y.h[, 1, ], 1, mean)
+interval.f2.wages <- apply(forecasts_t$Y.h[, 1, ], 1, hdi, credMass = 0.68)
+
+combined_data1.wages <- c(y[, 1], point.f1.wages)
+range_val1.wages <- range(combined_data1.wages, interval.f1.wages)
+
+plot(1:(nrow(y) + h), combined_data1.wages, type = "l", ylim = range_val1.wages, 
+     xlab = "", ylab = "", col = mcxs2, lwd = 2, 
+     main = paste("Forecast", var_names[1]), bty = "n", xaxt = "n")
+
+lines((nrow(y) + 1):(nrow(y) + h), point.f2, col = 'red', lwd = 2)
+axis(1, at = 1:(nrow(y) + h), cex.axis = 0.7, tck = 0)
+
+abline(v = nrow(y) + 1, col = mcxs1)
+polygon(c((nrow(y) + 1):(nrow(y) + h), rev((nrow(y) + 1):(nrow(y) + h))),
+        c(interval.f2.wages[1, ], rev(interval.f2.wages[2, ])), col = mcxs5_shade, border = mcxs5_shade)
+polygon(c((nrow(y) + 1):(nrow(y) + h), rev((nrow(y) + 1):(nrow(y) + h))),
+        c(interval.f1.wages[1, ], rev(interval.f1.wages[2, ])), col = mcxs2.shade1, border = mcxs2.shade1)
+```
 
 ```{r}
 forecast.table <- function(Y.h1, Y.h2, y) {

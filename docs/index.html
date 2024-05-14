@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.3.433">
+<meta name="generator" content="quarto-1.3.450">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
@@ -474,7 +474,7 @@ div.csl-indent {
 </section>
 <section id="augmented-dickey-fuller-test" class="level3">
 <h3 class="anchored" data-anchor-id="augmented-dickey-fuller-test">Augmented Dickey-Fuller test</h3>
-<p>The ADF test results confirm the non-stationarity observed in the ACF plots. Specifically, first differences suffices for all variables except the unemployment rate, which is stationary on the 5% level, and the CPI and CLI, which require second-order differencingto in order to be stationary.</p>
+<p>The ADF test results confirm the non-stationarity observed in the ACF plots. Specifically, first differences suffices for all variables except the unemployment rate, which is stationary on the 5% level, and the CPI and CLI, which require second-order differencing in order to be stationary.</p>
 <div class="cell">
 <div class="cell-output-display">
 
@@ -490,7 +490,7 @@ div.csl-indent {
 </section>
 <section id="the-baseline-model" class="level1">
 <h1>The baseline model</h1>
-<p>As an easy introduction, a bivariat random walk model will serve as a baseline model to apply the theorie.</p>
+<p>To provide a straightforward introduction, we will utilize a bivariate random walk model as a baseline. This approach will facilitate a clearer comprehension of the underlying theory.</p>
 <div class="cell">
 <div class="cell-output-display">
 <p><img src="index_files/figure-html/unnamed-chunk-2-1.png" class="img-fluid" width="672"></p>
@@ -499,11 +499,10 @@ div.csl-indent {
 <section id="var-representation" class="level3">
 <h3 class="anchored" data-anchor-id="var-representation">VAR representation</h3>
 <p>To analyze the macroeconomic and financial variables and run forecasts, a Vector autoregression (VAR) model, introduced by <span class="citation" data-cites="sims1972money">Sims (<a href="#ref-sims1972money" role="doc-biblioref">1972</a>)</span> can be applied, which allows for the multivariate framework of several time series. A general VAR model with <span class="math inline">\(\rho\)</span> lags for <span class="math inline">\(t=1,...,T\)</span> can be stated as:</p>
-<span class="math display">\[\begin{align}
-y_{t}   &amp;=\mu_{0}+A_{1}y_{t-1}+...+A_{\rho}y_{t-\rho}+\epsilon_{t}\\
-\epsilon_{t}|Y_{T-1}    &amp;\sim iid\left N_{N}(0_{N},\Sigma\right)
-
-\end{align}\]</span>
+<p><span class="math display">\[
+y_{t} = \mu_{0} + A_{1} y_{t-1} + \ldots + A_{\rho} y_{t-\rho} + \epsilon_{t}\\
+\epsilon_{t} \mid Y_{t-1} \sim \text{i.i.d. } \mathcal{N}_{N}(0_{N}, \Sigma)
+\]</span></p>
 <p>Where <span class="math inline">\(y_{t}\)</span> is a <span class="math inline">\(N\times 1\)</span> vector of observations at time <span class="math inline">\(t\)</span>, <span class="math inline">\(\mu_{0}\)</span> is a <span class="math inline">\(N\times1\)</span> vector of constant terms, <span class="math inline">\(A_{i}\)</span> is a <span class="math inline">\(N\times N\)</span> matrix of the autoregressive slope parameters, <span class="math inline">\(\epsilon_{t}\)</span> is a <span class="math inline">\(N \times 1\)</span> vector of error terms, <span class="math inline">\(Y_{t-1}\)</span> is the information set and <span class="math inline">\(\Sigma\)</span> is the <span class="math inline">\(N \times N\)</span> covariance matrix of the error term.</p>
 </section>
 <section id="baseline-estimation" class="level3">
@@ -609,13 +608,13 @@ A|\Sigma \sim MN_{K \times N}(\underline{A},\Sigma,\underline{V}) \\
 </div>
 <details open="">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">round</span>(V.prior,<span class="dv">3</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>V.prior</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
-<pre><code>     [,1] [,2] [,3]
-[1,]  100    0    0
-[2,]    0    0    0
-[3,]    0    0    0</code></pre>
+<pre><code>     [,1]  [,2]  [,3]
+[1,]  100 0e+00 0e+00
+[2,]    0 4e-04 0e+00
+[3,]    0 0e+00 4e-04</code></pre>
 </div>
 <details open="">
 <summary>Code</summary>
@@ -876,25 +875,16 @@ p(\lambda_t|Y,X,A,\Sigma) \sim \operatorname{IG2}(N+\nu_{\lambda}, \nu_{\lambda}
 <span id="cb22-55"><a href="#cb22-55" aria-hidden="true" tabindex="-1"></a>  }</span>
 <span id="cb22-56"><a href="#cb22-56" aria-hidden="true" tabindex="-1"></a>    </span>
 <span id="cb22-57"><a href="#cb22-57" aria-hidden="true" tabindex="-1"></a>  }  </span>
-<span id="cb22-58"><a href="#cb22-58" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb22-59"><a href="#cb22-59" aria-hidden="true" tabindex="-1"></a>  <span class="co"># means = list(</span></span>
-<span id="cb22-60"><a href="#cb22-60" aria-hidden="true" tabindex="-1"></a>  <span class="co">#     A.posterior.means        = round(apply(A.posterior.draws[,,s], 1:2, mean),2),</span></span>
-<span id="cb22-61"><a href="#cb22-61" aria-hidden="true" tabindex="-1"></a>  <span class="co">#     Sigma.posterior.means    = round(apply(Sigma.posterior.draws[,,s], 1:2, mean),2) ,</span></span>
-<span id="cb22-62"><a href="#cb22-62" aria-hidden="true" tabindex="-1"></a>  <span class="co">#     lambda.means             = round(mean(lambda.posterior.draws[,s]),2),</span></span>
-<span id="cb22-63"><a href="#cb22-63" aria-hidden="true" tabindex="-1"></a>  <span class="co">#     lambdasigma.means        = round(apply(Sigma.posterior.draws[,,s], 1:2, mean),2) * (round(mean(lambda.posterior.draws[,s]),2)* diag(2))</span></span>
-<span id="cb22-64"><a href="#cb22-64" aria-hidden="true" tabindex="-1"></a>  <span class="co"># )</span></span>
-<span id="cb22-65"><a href="#cb22-65" aria-hidden="true" tabindex="-1"></a>  <span class="co"># return(means)</span></span>
-<span id="cb22-66"><a href="#cb22-66" aria-hidden="true" tabindex="-1"></a>  <span class="co">#return(list(A.posterior.draws[,,s], Sigma.posterior.draws[,,s]))</span></span>
-<span id="cb22-67"><a href="#cb22-67" aria-hidden="true" tabindex="-1"></a>    pris <span class="ot">=</span> (<span class="fu">list</span>(<span class="at">A.posterior.draws =</span> A.posterior.draws, </span>
-<span id="cb22-68"><a href="#cb22-68" aria-hidden="true" tabindex="-1"></a>               <span class="at">Sigma.posterior.draws =</span> Sigma.posterior.draws,</span>
-<span id="cb22-69"><a href="#cb22-69" aria-hidden="true" tabindex="-1"></a>               <span class="at">lambda.posterior.draws=</span>lambda.posterior.draws))</span>
-<span id="cb22-70"><a href="#cb22-70" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-71"><a href="#cb22-71" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb22-72"><a href="#cb22-72" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-73"><a href="#cb22-73" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-74"><a href="#cb22-74" aria-hidden="true" tabindex="-1"></a>post.t.stats <span class="ot">&lt;-</span> <span class="fu">posterior_t</span>(Y.bv, X.bv, <span class="dv">1</span>, <span class="dv">100</span>)</span>
-<span id="cb22-75"><a href="#cb22-75" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-76"><a href="#cb22-76" aria-hidden="true" tabindex="-1"></a><span class="fu">round</span>(<span class="fu">apply</span>(post.t.stats[[<span class="dv">1</span>]], <span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>, mean),<span class="dv">2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb22-58"><a href="#cb22-58" aria-hidden="true" tabindex="-1"></a>  pris <span class="ot">=</span> (<span class="fu">list</span>(<span class="at">A.posterior.draws =</span> A.posterior.draws, </span>
+<span id="cb22-59"><a href="#cb22-59" aria-hidden="true" tabindex="-1"></a>               <span class="at">Sigma.posterior.draws =</span> Sigma.posterior.draws,</span>
+<span id="cb22-60"><a href="#cb22-60" aria-hidden="true" tabindex="-1"></a>               <span class="at">lambda.posterior.draws=</span>lambda.posterior.draws))</span>
+<span id="cb22-61"><a href="#cb22-61" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-62"><a href="#cb22-62" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb22-63"><a href="#cb22-63" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-64"><a href="#cb22-64" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-65"><a href="#cb22-65" aria-hidden="true" tabindex="-1"></a>stats <span class="ot">=</span> <span class="fu">posterior_t</span>(Y.bv, X.bv, <span class="dv">1</span>, <span class="dv">100</span>)</span>
+<span id="cb22-66"><a href="#cb22-66" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-67"><a href="#cb22-67" aria-hidden="true" tabindex="-1"></a><span class="fu">round</span>(<span class="fu">apply</span>(stats[[<span class="dv">1</span>]], <span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>, mean),<span class="dv">2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>      [,1] [,2]
@@ -904,7 +894,7 @@ p(\lambda_t|Y,X,A,\Sigma) \sim \operatorname{IG2}(N+\nu_{\lambda}, \nu_{\lambda}
 </div>
 <details open="">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="fu">round</span>(<span class="fu">apply</span>(post.t.stats[[<span class="dv">2</span>]], <span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>, mean),<span class="dv">2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="fu">round</span>(<span class="fu">apply</span>(stats[[<span class="dv">2</span>]], <span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>, mean),<span class="dv">2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>      [,1]  [,2]
@@ -913,14 +903,14 @@ p(\lambda_t|Y,X,A,\Sigma) \sim \operatorname{IG2}(N+\nu_{\lambda}, \nu_{\lambda}
 </div>
 <details open="">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="fu">round</span>(<span class="fu">mean</span>(post.t.stats[[<span class="dv">3</span>]]),<span class="dv">2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="fu">round</span>(<span class="fu">mean</span>(stats[[<span class="dv">3</span>]]),<span class="dv">2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] 1.11</code></pre>
 </div>
 <details open="">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="fu">round</span>(<span class="fu">apply</span>(post.t.stats[[<span class="dv">2</span>]], <span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>, mean),<span class="dv">2</span>) <span class="sc">*</span> <span class="fu">round</span>(<span class="fu">mean</span>(post.t.stats[[<span class="dv">3</span>]]),<span class="dv">2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="fu">round</span>(<span class="fu">apply</span>(stats[[<span class="dv">2</span>]], <span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>, mean),<span class="dv">2</span>) <span class="sc">*</span> <span class="fu">round</span>(<span class="fu">mean</span>(stats[[<span class="dv">3</span>]]),<span class="dv">2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>        [,1]    [,2]
@@ -931,6 +921,7 @@ p(\lambda_t|Y,X,A,\Sigma) \sim \operatorname{IG2}(N+\nu_{\lambda}, \nu_{\lambda}
 <p>One can observe, that the means represent exactly the expected values, whereas the variances lie a bit further apart from 1.</p>
 <section id="include-nu-sampling" class="level4">
 <h4 class="anchored" data-anchor-id="include-nu-sampling">Include <span class="math inline">\(\nu\)</span> sampling</h4>
+<p>A possible further extension of the model would be the implementation of a sampling algorithm. This can be applied using a Metropolis-Hastings structure.</p>
 <div class="cell">
 <details open="">
 <summary>Code</summary>
@@ -945,7 +936,7 @@ p(\lambda_t|Y,X,A,\Sigma) \sim \operatorname{IG2}(N+\nu_{\lambda}, \nu_{\lambda}
 <div class="cell">
 <details open="">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>forecasts <span class="ot">&lt;-</span> <span class="cf">function</span>(Y, A.posterior.draws, Sigma.posterior, h, S, p){</span>
+<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>forecasts <span class="ot">&lt;-</span> <span class="cf">function</span>(Y, A.posterior, Sigma.posterior, h, S, p){</span>
 <span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>  N <span class="ot">=</span> <span class="fu">ncol</span>(Y)</span>
 <span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>  Y.h         <span class="ot">=</span> <span class="fu">array</span>(<span class="cn">NA</span>,<span class="fu">c</span>(h,N,S))</span>
 <span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (s <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span>S){</span>
@@ -955,7 +946,7 @@ p(\lambda_t|Y,X,A,\Sigma) \sim \operatorname{IG2}(N+\nu_{\lambda}, \nu_{\lambda}
 <span id="cb31-8"><a href="#cb31-8" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb31-9"><a href="#cb31-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span>h){</span>
 <span id="cb31-10"><a href="#cb31-10" aria-hidden="true" tabindex="-1"></a>      x.T         <span class="ot">=</span> <span class="fu">c</span>(<span class="dv">1</span>,<span class="fu">as.vector</span>(<span class="fu">t</span>(x.Ti)))</span>
-<span id="cb31-11"><a href="#cb31-11" aria-hidden="true" tabindex="-1"></a>      Y.h[i,,s]   <span class="ot">=</span> <span class="fu">rmvnorm</span>(<span class="dv">1</span>, <span class="at">mean =</span> x.T<span class="sc">%*%</span>A.posterior.draws[,,s], <span class="at">sigma=</span>Sigma.posterior[,,s])</span>
+<span id="cb31-11"><a href="#cb31-11" aria-hidden="true" tabindex="-1"></a>      Y.h[i,,s]   <span class="ot">=</span> <span class="fu">rmvnorm</span>(<span class="dv">1</span>, <span class="at">mean =</span> x.T<span class="sc">%*%</span>A.posterior[,,s], <span class="at">sigma=</span>Sigma.posterior[,,s])</span>
 <span id="cb31-12"><a href="#cb31-12" aria-hidden="true" tabindex="-1"></a>      </span>
 <span id="cb31-13"><a href="#cb31-13" aria-hidden="true" tabindex="-1"></a>      <span class="cf">if</span> (p<span class="sc">==</span><span class="dv">1</span>){</span>
 <span id="cb31-14"><a href="#cb31-14" aria-hidden="true" tabindex="-1"></a>        x.Ti        <span class="ot">=</span> Y.h[i,,s]</span>
@@ -973,9 +964,12 @@ p(\lambda_t|Y,X,A,\Sigma) \sim \operatorname{IG2}(N+\nu_{\lambda}, \nu_{\lambda}
 <details open="">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>post.results <span class="ot">&lt;-</span> <span class="fu">posterior</span>(Y, X, <span class="dv">4</span>, <span class="dv">100</span>)</span>
-<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>post.t.results <span class="ot">&lt;-</span> <span class="fu">posterior_t</span>(Y, X, <span class="dv">4</span>, <span class="dv">100</span>)</span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>forecasts_norm <span class="ot">&lt;-</span> <span class="fu">forecasts</span>(Y, post.results<span class="sc">$</span>A.posterior, post.results<span class="sc">$</span>Sigma.posterior, <span class="dv">8</span>, <span class="dv">100</span>, <span class="dv">4</span>)</span>
-<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a>forecasts_t <span class="ot">&lt;-</span> <span class="fu">forecasts</span>(Y, post.t.results<span class="sc">$</span>A.posterior.draws, post.t.results<span class="sc">$</span>Sigma.posterior.draws, <span class="dv">8</span>, <span class="dv">100</span>, <span class="dv">4</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a>post.t.results <span class="ot">&lt;-</span> <span class="fu">posterior_t</span>(Y, X, <span class="dv">4</span>, <span class="dv">100</span>)</span>
+<span id="cb32-6"><a href="#cb32-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-7"><a href="#cb32-7" aria-hidden="true" tabindex="-1"></a>forecasts_t <span class="ot">&lt;-</span> <span class="fu">forecasts</span>(Y, post.t.results<span class="sc">$</span>A.posterior.draws, post.t.results<span class="sc">$</span>Sigma.posterior.draws, <span class="dv">8</span>, <span class="dv">100</span>, <span class="dv">4</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 <div class="cell">
@@ -984,6 +978,19 @@ p(\lambda_t|Y,X,A,\Sigma) \sim \operatorname{IG2}(N+\nu_{\lambda}, \nu_{\lambda}
 </div>
 </div>
 <p>We observe the real wages to stabilize in the future, but not to reach levels of the pre-Covid area. The mean predictions for normal distributed errors and t-distributed errors mostly align, whereas the intervals of the t-distributed model show a wider spread.</p>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code>  Period        Variable Baseline_Forecast Extension_Forecast
+1      1 Log.of.Real.WPI        0.08932255         0.08846136
+2      2 Log.of.Real.WPI        0.09039551         0.08957924
+3      3 Log.of.Real.WPI        0.09126389         0.08979714
+4      4 Log.of.Real.WPI        0.09144608         0.09052198
+5      5 Log.of.Real.WPI        0.09253852         0.09168131
+6      6 Log.of.Real.WPI        0.09219602         0.09162707
+7      7 Log.of.Real.WPI        0.09304666         0.09149078
+8      8 Log.of.Real.WPI        0.09311080         0.09168383</code></pre>
+</div>
+</div>
 </section>
 <section id="references" class="level1 unnumbered">
 
