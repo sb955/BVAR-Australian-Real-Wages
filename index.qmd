@@ -24,11 +24,9 @@ Accurate forecasting of real wages is imperative for policymakers and businesses
 
 **Real Wages** defined as:
 
-```{=tex}
-\begin{align}
+$$
 \log Real\:wages = \log Nominal\:wages\:- \log CPI 
-\end{align}
-```
+$$
 # Data
 
 Labor data is retrieved from the Australian Bureau of Statistics (ABS) using the **readabs** function and the Reserve Bank of Australia (RBA) using **readrba**.
@@ -97,8 +95,8 @@ mcxs2.shade1= rgb(mcxs2.rgb[1],mcxs2.rgb[2],mcxs2.rgb[3], alpha=120, maxColorVal
 #define periods
 start.period <- "1998-12-01"
 start.period.qt <- "1998 Q4"
-end.period <- "2023-12-31"
-end.period.qt <- "2023 Q4"
+end.period <- "2024-03-01"
+end.period.qt <- "2024 Q1"
 
 
 # Get wage growth
@@ -126,6 +124,9 @@ log.impi <- log(subset(read_abs(series_id = "A2295765J"), date >= as.Date(start.
 
 # Get cost of living index (CLI)
 log.cli <- log(subset(read_abs(series_id = "A4083524T"), date >= as.Date(start.period) & date <= as.Date(end.period))$value)
+
+#real gdp
+log.real.gdp <- log(subset(read_rba_seriesid("GGDPCVGDP"), date >= as.Date("1998-12-07") & date <= as.Date("2024-03-07"))$value)
 
 # Get Log of Unemployment rate
 log.unempl <- read_abs(series_id = "A84423092X") |> 
@@ -162,9 +163,6 @@ log.h.worked <- read_rba_seriesid("GLFMHW") |>
   select(log_quarterly_sum) |>
   rename(log.h.worked = log_quarterly_sum)
 
-#real gdp
-log.real.gdp <- log(subset(read_rba_seriesid("GGDPCVGDP"), date >= as.Date(start.period) & date <= as.Date(end.period))$value)
-
 ```
 
 ## Descriptive Analysis
@@ -181,10 +179,10 @@ df <- data.frame(
   "Log of EXPI" = log.expi,
   "Log of IMPI" = log.impi,
   "Log of CLI" = log.cli,
+  #"Log of Real GDP" = log.real.gdp,
   "Log of Unemployment" = log.unempl,
   "Log of Participation" = log.parti,
-  "Log Hours Worked" = log.h.worked,
-  "Log of Real GDP" = log.real.gdp
+  "Log Hours Worked" = log.h.worked
 )
 # Display the first 5 rows of the dataframe
 var_names <- colnames(df)
@@ -203,15 +201,20 @@ Other indicators like Cost of Living Index, the Import Index and the Producer Pr
 
 ```{r PLOTS, echo=FALSE}
 # Plot data
-par(mfrow = c(4, 3), mar = c(2, 2, 2, 2))
+#par(mfrow = c(3, 3), mar = c(2, 2, 2, 2))
 
-for (j in 1:ncol(df)) {
-  plot(x = dates, y = df[, j], type = 'l',
-       main = var_names[j], ylab = "", xlab = "",
+#original_par <- par()
+#par(original_par)
+data.plots <- function(data, var_names){
+  par(mfrow = c(3, 3), mar = c(2, 2, 2, 2))
+  for (j in 2:ncol(data)) 
+  plot(x = data$Date, y = data[, j], type = 'l',
+       main = var_names[j-1], ylab = "", xlab = "",
        lwd = 2.5,
        col=mcxs2,
-       ylim = c(min(df[, j], na.rm = TRUE), max(df[, j], na.rm = TRUE)))
+       ylim = c(min(data[, j], na.rm = TRUE), max(data[, j], na.rm = TRUE)))
 }
+data.plots(df_display, var_names)
 ```
 
 ## Preliminary data analysis
@@ -289,8 +292,6 @@ perform_adf_tests <- function(df) {
       }
     }
   }
-
-  # Return the results dataframe
   return(results)
 }
 
@@ -324,10 +325,12 @@ lines(rw_data[,2], col=mcxs2, ylab='', xlab='')
 
 To analyze the macroeconomic and financial variables and run forecasts, a Vector autoregression (VAR) model, introduced by @sims1972money can be applied, which allows for the multivariate framework of several time series. A general VAR model with $\rho$ lags for $t=1,...,T$ can be stated as:
 
-$$
+```{=tex}
+\begin{align}
 y_{t} = \mu_{0} + A_{1} y_{t-1} + \ldots + A_{\rho} y_{t-\rho} + \epsilon_{t}\\
 \epsilon_{t} \mid Y_{t-1} \sim \text{i.i.d. } \mathcal{N}_{N}(0_{N}, \Sigma)
-$$
+\end{align}
+```
 
 Where $y_{t}$ is a $N\times 1$ vector of observations at time $t$, $\mu_{0}$ is a $N\times1$ vector of constant terms, $A_{i}$ is a $N\times N$ matrix of the autoregressive slope parameters, $\epsilon_{t}$ is a $N \times 1$ vector of error terms, $Y_{t-1}$ is the information set and $\Sigma$ is the $N \times N$ covariance matrix of the error term.
 
@@ -342,10 +345,12 @@ y_t' = x_t'A + \epsilon_t'.
 $$
 If then all vectors $y_t'$ for t going from 1 to T are stacked under one another, one can form a $T \times N$ matrix $Y = (y_1, y_2, ..., y_T)'$ and similarly $X= (x_1, x_2,...,x_T)'$, with dimensions $T \times K$, as well as $E = (\epsilon_1, \epsilon_2,...,\epsilon_T)'$, a $T \times N$ matrix, to write the model as
 
-$$
+```{=tex}
+\begin{align}
 Y=XA + E\\
 Y|X,A,\Sigma \sim MN_{T \times N} (XA, \Sigma, I_T).
-$$
+\end{align}
+```
 
 ```{r Base model set-up  , echo=TRUE, results='hide'}
 y.bv <- ts(rw_data,  frequency=1)
@@ -353,7 +358,6 @@ N = ncol(y.bv)
 p       = 1
 K       = 1 + p*N
 S       = 1000
-h       = 8
 Y.bv       = ts(y.bv[(p+1):nrow(y.bv),])
 X.bv      = matrix(1,nrow(Y.bv),1)
 for (i in 1:p){
@@ -363,21 +367,29 @@ for (i in 1:p){
 
 The models likelihood function is
 
-$$
-L(A,\Sigma|Y,X) = (2\pi)^{-\frac{TN}{2}}  det(\Sigma)^{-\frac{T}{2}}exp\{-\frac{1}{2}tr[\Sigma^{-1}(Y-XA)'(Y-XA)]\},
-$$
+```{=tex}
+\begin{align}
+L(A,\Sigma|Y,X) &= (2\pi)^{-\frac{TN}{2}}  det(\Sigma)^{-\frac{T}{2}}exp\{-\frac{1}{2}tr[\Sigma^{-1}(Y-XA)'(Y-XA)]\},
+\end{align}
+```
+
 which can be rewritten as
 
-$$
+```{=tex}
+\begin{align}
 L(A,\Sigma|Y,X) \propto det(\Sigma)^{-\frac{T}{2}} exp \left\{-\frac{1}{2} tr \left[ \Sigma^{-1}(A-\hat{A})'X'X(A-\hat{A}) \right] \right\}\\
 \times exp \left\{-\frac{1}{2} tr \left[\Sigma^{-1}(Y-X \hat{A})'(Y-X \hat{A}) \right] \right\}.
-$$
+\end{align}
+```
+
 The maximum likelihood estimators are represented by:
 
-$$
-\hat{A} = (X'X)^{-1}X'Y\\
-\hat{\Sigma} = \frac{1}{T} (Y-X \hat{A})'(Y-X \hat{A}).
-$$
+```{=tex}
+\begin{align}
+\hat{A} &= (X'X)^{-1}X'Y\\
+\hat{\Sigma} &= \frac{1}{T} (Y-X \hat{A})'(Y-X \hat{A}).
+\end{align}
+```
 
 ```{r Maximum Likelihood  , echo=TRUE}
 A.hat       = solve(t(X.bv)%*%X.bv)%*%t(X.bv)%*%Y.bv
@@ -389,24 +401,28 @@ round(Sigma.hat,3)
 
 The natural conjugate priors for $A$ and $\Sigma$ are assumed to follow a matrix normal and inverse Wishart distribution respectively:
 
-$$
+```{=tex}
+\begin{align}
 p(A,\Sigma) = MNIW(\underline{A},\underline{S},\underline{V},\underline{\nu})\\
 A|\Sigma \sim MN_{K \times N}(\underline{A},\Sigma,\underline{V}) \\
 \Sigma \sim IW_N(\underline{S},\underline{\nu}),
-$$
+\end{align}
+```
 
 with the priors to be specified as Minnesota priors following @doan1984forecasting
 
-$$
+```{=tex}
+\begin{align}
 \underline{A} = [0_{N \times 1}, \quad I_N, \quad 0_{N \times (p-1)N}]'\\
 \underline{V} = diag([\kappa_2, \quad \kappa_1 (p^{-2} \otimes I_N)]).
-$$
+\end{align}
+```
 
 ```{r Minnesota priors, echo=TRUE}
 N = ncol(Y.bv)
     
 #set kapps
-kappa.1 <- 0.01^2
+kappa.1 <- 1
 kappa.2 <-100
 K = 1 + (p*N)
   
@@ -436,10 +452,12 @@ p(A,\Sigma|Y,X) &\propto \det(\Sigma)^{-\frac{T}{2}} \\
 
 Combining terms yields the following distributions for $A$ and $\Sigma$:
 
-$$
+```{=tex}
+\begin{align}
 p(A|Y,X,\Sigma) = MN_{K \times N}(\bar{A}, \Sigma, \bar{V}) \\
 p(\Sigma|Y,X) = IW_N(\bar{S},\bar{\nu}),
-$$
+\end{align}
+```
 
 where parameters $\bar{A}$ , $\bar{V}$, $\bar{S}$ and $\bar{\nu}$ characterising the posterior distribution and are given by
 
@@ -496,7 +514,7 @@ posterior <- function(Y, X, p, S){
   #S = 100
   
   #set kappas
-  kappa.1   = 0.02^2
+  kappa.1   = 1
   kappa.2   = 100
   K = 1 + (p*N)
   
@@ -525,8 +543,6 @@ posterior <- function(Y, X, p, S){
   }
   list(A.posterior = A.posterior, Sigma.posterior = Sigma.posterior)
 }
-
-
 ```
 
 # Model extension: T-Distributed errors
@@ -536,7 +552,7 @@ An interesting specification in our model of forecasting real wages is the intro
 Following @chan2020large, the general Covariance structure is
 
 $$
-vec(E) \sim (0, \Sigma \otimes \Omega)
+vec(E) \sim \operatorname{N}(0, \Sigma \otimes \Omega)
 $$
 
 where $\Omega$ is a $T \times T$ covariance matrix.
@@ -591,7 +607,7 @@ After rearranging terms, the Kernel of the posterior distribution can be obtaine
 which follows a multinomial-normal-inverse-wishart distribution:
 
 $$
-p(A, \Sigma|Y,X) \sim \operatorname{MNIW}(\bar{A}, \bar{V}, \bar{s}, \bar{v}).
+p(A, \Sigma|Y,X) \sim \operatorname{MNIW}(\bar{A}, \bar{\nu}, \bar{s}, \bar{v}).
 $$
 
 The posterior parameters are then given as follows:
@@ -649,7 +665,7 @@ Sampling algorithm:
 
 4. Draw ${\nu_{\lambda}^*}^{(s)}$ from $\operatorname{N}(\nu^{s-1}, var_{\nu})$ applying the Metropolis-Hastings algorithm.)
 
-```{r echo=TRUE}
+```{r Posterior extension, echo=TRUE}
 posterior_t <- function(Y, X, p, S){
   
   #p=1
@@ -660,7 +676,7 @@ posterior_t <- function(Y, X, p, S){
   
   N = ncol(Y)
   t <- NROW(Y)
-  kappa.1   = 0.02^2
+  kappa.1   = 1
   kappa.2   = 100
   K = 1 + (p*N)
   
@@ -704,7 +720,7 @@ posterior_t <- function(Y, X, p, S){
     u_t <- Y[x,] - t(X[x,]) %*% A.posterior.draws[,,s]
     lambda = rinvgamma(1, N+lambda.nu.prior, lambda.nu.prior + u_t %*% Sigma.posterior.draws[,,s] %*% t(u_t) )
     lambda.posterior.draws[x,s] <- lambda
-  }
+    }
     
   }  
   pris = (list(A.posterior.draws = A.posterior.draws, 
@@ -713,28 +729,136 @@ posterior_t <- function(Y, X, p, S){
 
 }
 
+```
 
-stats = posterior_t(Y.bv, X.bv, 1, 100)
+```{r stats}
+stats = posterior_t(Y.bv, X.bv, 1, 1000)
 
-round(apply(stats[[1]], 1:2, mean),2)
+round(apply(stats[[1]][,,s], 1:2, mean),2)
 
-round(apply(stats[[2]], 1:2, mean),2)
+round(apply(stats[[2]][,,s], 1:2, mean),2)
 
-round(mean(stats[[3]]),2)
+round(mean(stats[[3]][,1:1000]),2)
 
-round(apply(stats[[2]], 1:2, mean),2) * round(mean(stats[[3]]),2)
+round(apply(stats[[2]][,,s], 1:2, mean),2) * round(mean(stats[[3]][,1:1000]),2)
 
 ```
 
-One can observe, that the means represent exactly the expected values, whereas the variances lie a bit further apart from 1.
+One can observe, that the means represent the expected values, whereas the variances lie a bit further apart from 1.
 
 #### Include $\nu$ sampling
 
 A possible further extension of the model is the implementation of a sampling algorithm for $\nu$. This can be applied using a Metropolis-Hastings structure.  
 
 ```{r nu_sampling, echo=TRUE }
-#empty
+#1st version
+library(MCMCpack)
+library(mvtnorm)
+set.seed(123)
+# Estimate initial parameters
+A.hat = solve(t(X.bv) %*% X.bv) %*% t(X.bv) %*% Y.bv
+Sigma.hat = t(Y.bv - X.bv %*% A.hat) %*% (Y.bv - X.bv %*% A.hat) / nrow(Y.bv)
+
+t <- NROW(Y.bv)
+kappa.1 <- 0.02^2
+kappa.2 <- 100
+K = 1 + (p * N)
+
+A.prior = matrix(0, K, N)
+A.prior[2:(N + 1),] = diag(N)
+V.prior = diag(c(kappa.2, kappa.1 * ((1:p)^(-2)) %x% rep(1, N)))
+S.prior = diag(diag(Sigma.hat))
+nu.prior = N + 1
+lambda.nu.prior = 5
+
+# Initialize lambda
+lambda.0 = rinvgamma(t, lambda.nu.prior / 2, lambda.nu.prior / 2)
+
+# Initialize arrays for posterior draws
+Sigma.posterior.draws <- array(dim = c(N, N, S))
+A.posterior.draws <- array(dim = c(K, N, S))
+lambda.posterior.draws <- array(NA, c(t, S))
+lambda.nu.draws <- numeric(S)
+var.lambda.nu <- 1
+
+# sample nu function
+sample_nu2 <- function(lambda, lambda.nu, var.lambda.nu) {
+  lambda.nu.star <- rnorm(1, mean = lambda.nu, sd = var.lambda.nu)
+  
+  if (lambda.nu.star > 2) {
+    log_likelihood_star <- sum(dgamma(lambda, shape = lambda.nu.star, rate = lambda.nu.star, log = TRUE))
+    log_prior_star <- dnorm(lambda.nu.star, mean = lambda.nu, sd = var.lambda.nu, log = TRUE)
+    
+    log_likelihood_curr <- sum(dgamma(lambda, shape = lambda.nu, rate = lambda.nu, log = TRUE))
+    log_prior_curr <- dnorm(lambda.nu, mean = lambda.nu, sd = var.lambda.nu, log = TRUE)
+    
+    log_ratio <- (log_likelihood_star + log_prior_star) - (log_likelihood_curr + log_prior_curr)
+    
+    ratio <- exp(log_ratio)
+    
+    alpha <- min(1, ratio)
+    
+    if (runif(1) < alpha) {
+      return(lambda.nu.star)
+    }
+  }
+  return(lambda.nu)
+}
+
+#run posterior draws with nu sampling
+for (s in 1:S) {
+  if (s == 1) {
+    lambda.s <- lambda.0
+  } else {
+    lambda.s <- lambda.posterior.draws[, s - 1]
+  }
+  
+  Omega <- diag(lambda.s)
+  Omega.inv <- diag(1 / lambda.s)
+  
+  V.bar.ext = solve(t(X.bv) %*% Omega.inv %*% X.bv + solve(V.prior))
+  A.bar.ext = V.bar.ext %*% (t(X.bv) %*% Omega.inv %*% Y.bv + solve(V.prior) %*% A.prior)
+  nu.bar.ext = t + nu.prior
+  S.bar.ext = S.prior + t(Y.bv) %*% Omega.inv %*% Y.bv + t(A.prior) %*% solve(V.prior) %*% A.prior - t(A.bar.ext) %*% solve(V.bar.ext) %*% A.bar.ext
+  S.bar.ext.inv = solve(S.bar.ext)
+  
+  Sigma.inv.draw = rWishart(1, nu.bar.ext, S.bar.ext.inv)[,,1]
+  Sigma.posterior.draws[,,s] = solve(Sigma.inv.draw)
+  A.posterior.draws[,,s] = matrix(mvtnorm::rmvnorm(1, mean = as.vector(A.bar.ext), sigma = Sigma.posterior.draws[,,s] %x% V.bar.ext), ncol = N)
+  
+  for (x in 1:t) {
+    u_t <- Y.bv[x,] - t(X.bv[x,]) %*% A.posterior.draws[,,s]
+    lambda.posterior.draws[x, s] <- rinvgamma(1, N + lambda.nu.prior, lambda.nu.prior + u_t %*% Sigma.posterior.draws[,,s] %*% t(u_t))
+  }
+  
+  lambda.nu.draws[s] <- sample_nu2(lambda.posterior.draws[, s], lambda.nu.prior, var.lambda.nu)
+  lambda.nu.prior <- lambda.nu.draws[s]
+}
+
+# Plot the nu draws
+plot(lambda.nu.draws, type = 'l', col = 'blue', lwd = 2, 
+     main = expression(paste(lambda_nu, " draws")), 
+     xlab = "Iteration", ylab = expression(lambda_nu))
+
 ```
+
+## Stochastic volatility
+
+As a further extension, stochastic volatility can be added to the model.
+Therefor, conditional heteroskedasticity will be defined as:
+
+$$
+E|X \sim\mathcal{MN}_{T\times N}\left(0_{T\times N},\Sigma,\text{diag}\left(\sigma^{2}\right)\right)
+$$
+
+```{r}
+
+
+
+
+```
+
+
 
 # Real Wage data forecasts
 
@@ -753,42 +877,39 @@ for (i in 1:p){
 
 h       = 8
 S       = 1000
-K = 1 + (p*N)
 N = ncol(Y)
+K = 1 + (p*N)
 A.hat       = solve(t(X)%*%X)%*%t(X)%*%Y
 Sigma.hat   = t(Y-X%*%A.hat)%*%(Y-X%*%A.hat)/nrow(Y)
-round(A.hat,3)
-round(Sigma.hat,3)
-round(cov2cor(Sigma.hat),3)
-N = ncol(Y)
-#set kapps
-kappa.1 <- 0.02^2
-kappa.2 <-100
-K = 1 + (p*N)
 
-A.prior     = matrix(0,nrow(A.hat),ncol(A.hat))
-A.prior[2:(N+1),] = diag(N)
-V.prior     = diag(c(kappa.2,kappa.1*((1:p)^(-2))%x%rep(1,N)))
-S.prior     = diag(diag(Sigma.hat))
-nu.prior    = N+1
+# #set kapps
+# kappa.1 <- 1
+# kappa.2 <-100
+# K = 1 + (p*N)
 
-# normal-inverse Wishart posterior parameters
-V.bar.inv   = t(X)%*%X + diag(1/diag(V.prior))
-V.bar       = solve(V.bar.inv)
-A.bar       = V.bar%*%(t(X)%*%Y + diag(1/diag(V.prior))%*%A.prior)
-nu.bar      = nrow(Y) + nu.prior
-S.bar       = S.prior + t(Y)%*%Y + t(A.prior)%*%diag(1/diag(V.prior))%*%A.prior - t(A.bar)%*%V.bar.inv%*%A.bar
-S.bar.inv   = solve(S.bar)
+# A.prior     = matrix(0,nrow(A.hat),ncol(A.hat))
+# A.prior[2:(N+1),] = diag(N)
+# V.prior     = diag(c(kappa.2,kappa.1*((1:p)^(-2))%x%rep(1,N)))
+# S.prior     = diag(diag(Sigma.hat))
+# nu.prior    = N+1
+# 
+# # normal-inverse Wishart posterior parameters
+# V.bar.inv   = t(X)%*%X + diag(1/diag(V.prior))
+# V.bar       = solve(V.bar.inv)
+# A.bar       = V.bar%*%(t(X)%*%Y + diag(1/diag(V.prior))%*%A.prior)
+# nu.bar      = nrow(Y) + nu.prior
+# S.bar       = S.prior + t(Y)%*%Y + t(A.prior)%*%diag(1/diag(V.prior))%*%A.prior - t(A.bar)%*%V.bar.inv%*%A.bar
+# S.bar.inv   = solve(S.bar)
 
 ```
 
 
-```{r forecast functions, echo=TRUE}
-forecasts <- function(Y, A.posterior, Sigma.posterior, h, S, p){
+```{r forecast base functions, echo=TRUE}
+forecasts_base <- function(Y, A.posterior, Sigma.posterior, h, S, p){
   N = ncol(Y)
   Y.h         = array(NA,c(h,N,S))
   for (s in 1:S){
-    x.Ti        = Y[(nrow(Y)-h+1):nrow(Y),]
+    x.Ti        = Y[(nrow(Y)-p+1):nrow(Y),]
     x.Ti        = x.Ti[p:1,] 
   
 
@@ -809,20 +930,48 @@ forecasts <- function(Y, A.posterior, Sigma.posterior, h, S, p){
 
 ```
 
+```{r forecast t, echo=TRUE}
+forecasts_t <- function(Y, A.posterior.draws, Sigma.posterior.draws, lambda.posterior.draws, h, S, p){
+  N = ncol(Y)
+  t= nrow(Y)
+  Y.h         = array(NA,c(h,N,S))
+  for (s in 1:S){
+    x.Ti        = Y[(nrow(Y)-p+1):nrow(Y),]
+    x.Ti        = x.Ti[p:1,] 
+  
+
+    for (i in 1:h){
+      x.T         = c(1,as.vector(t(x.Ti)))
+      Y.h[i,,s]   = rmvnorm(1, mean = x.T%*%A.posterior.draws[,,s], sigma= Sigma.posterior.draws[,,s] %*% (lambda.posterior.draws[,s] %*% diag(t))) 
+      
+      if (p==1){
+        x.Ti        = Y.h[i,,s]
+      } else {
+        x.Ti        = rbind(Y.h[i,,s],x.Ti[1:(p-1),])
+      }
+    }
+  }
+  
+  list(Y.h = Y.h)
+}
+
+```
+
 
 ```{r Call functions, echo=TRUE}
 post.results <- posterior(Y, X, 4, 1000)
 
-forecasts_norm <- forecasts(Y, post.results$A.posterior, post.results$Sigma.posterior, 8, 1000, 4)
+forecasts_norm <- forecasts_base(Y, post.results$A.posterior, post.results$Sigma.posterior, 8, 1000, 4)
 
 post.t.results <- posterior_t(Y, X, 4, 1000)
 
-forecasts_t <- forecasts(Y, post.t.results$A.posterior.draws, post.t.results$Sigma.posterior.draws, 8, 1000, 4)
+forecasts_t <- forecasts_base(Y, post.t.results$A.posterior.draws, post.t.results$Sigma.posterior.draws, 8, 1000, 4)
+#forecasts_t <- forecasts(Y, post.t.results$A.posterior.draws, post.t.results$Sigma.posterior.draws, post.t.results$lambda.posterior.draws, 1000, 4)
 ```
 
-```{r plots}
+```{r forecast plots}
 mcxs5_shade <- rgb(240/255, 128/255, 128/255, alpha = 0.4)
-#par(mfrow = c(5, 2), mar = c(2, 2, 1, 1), oma = c(0, 0, 2, 0))
+par(mfrow = c(5, 2), mar = c(2, 2, 1, 1), oma = c(0, 0, 2, 0))
 par(mfrow = c(5, 2), mar = c(2, 2, 1, 1), oma = c(0, 0, 2, 0))
 x_dates <- format(as.yearqtr(c(dates, seq(tail(dates, 1), by = "quarter", length.out = h + 1)[-1])), "%Y Q%q")
 
@@ -834,7 +983,8 @@ unique_years <- unique(years)
 year_positions <- sapply(unique_years, function(y) mean(which(years == y)))
 
 forecast.plots <- function(Y.h1, Y.h2, y){
-  for (x in 1:10) {
+
+  for (x in 1:9) {
     point.f1 <- apply(Y.h1[, x, ], 1, mean)
     interval.f1 <- apply(Y.h1[, x, ], 1, hdi, credMass = 0.68)
     
@@ -871,29 +1021,34 @@ The mean predictions for normal distributed errors and t-distributed errors most
 ```{r single forecast}
 par(mfrow = c(1, 1), mar = c(4, 4, 2, 1), oma = c(0, 0, 2, 0))
 
-point.f1.wages = apply(forecasts_norm$Y.h[,1,],1,mean)
-interval.f1.wages = apply(forecasts_norm$Y.h[,1,],1,hdi,credMass=0.68)
+single.forecast.plot <- function(forecasts_norm, forecasts_t, y){
 
-point.f2.wages <- apply(forecasts_t$Y.h[, 1, ], 1, mean)
-interval.f2.wages <- apply(forecasts_t$Y.h[, 1, ], 1, hdi, credMass = 0.68)
+    point.f1.wages = apply(forecasts_norm$Y.h[,1,],1,mean)
+    interval.f1.wages = apply(forecasts_norm$Y.h[,1,],1,hdi,credMass=0.68)
+    
+    point.f2.wages <- apply(forecasts_t$Y.h[, 1, ], 1, mean)
+    interval.f2.wages <- apply(forecasts_t$Y.h[, 1, ], 1, hdi, credMass = 0.68)
+    
+    combined_data1.wages <- c(y[, 1], point.f1.wages)
+    range_val1.wages <- range(combined_data1.wages, interval.f1.wages)
+    
+    plot(1:(nrow(y) + h), combined_data1.wages, type = "l", ylim = range_val1.wages, 
+         xlab = "", ylab = "", col = mcxs2, lwd = 2, 
+         main = paste("Forecast", var_names[1]), bty = "n", xaxt = "n")
+    
+    lines((nrow(y) + 1):(nrow(y) + h), point.f2.wages, col = 'red', lwd = 2)
+    axis(1, at = 1:(nrow(y) + h), labels = quarters, tick = TRUE, las = 2, cex.axis = 0.23)
+    axis(1, at = year_positions, labels = unique_years, tick = FALSE, line = -0.1, cex.axis = 0.4)
+    
+    abline(v = nrow(y) + 1, col = mcxs1)
+    polygon(c((nrow(y) + 1):(nrow(y) + h), rev((nrow(y) + 1):(nrow(y) + h))),
+            c(interval.f2.wages[1, ], rev(interval.f2.wages[2, ])), col = mcxs5_shade, border = mcxs5_shade)
+    polygon(c((nrow(y) + 1):(nrow(y) + h), rev((nrow(y) + 1):(nrow(y) + h))),
+            c(interval.f1.wages[1, ], rev(interval.f1.wages[2, ])), col = mcxs2.shade1, border = mcxs2.shade1)
+    legend("topleft", legend = c("Base", "T-Distr"), col = c(mcxs2, "red"), lwd = 2, cex = 0.6)
+}
 
-combined_data1.wages <- c(y[, 1], point.f1.wages)
-range_val1.wages <- range(combined_data1.wages, interval.f1.wages)
-
-plot(1:(nrow(y) + h), combined_data1.wages, type = "l", ylim = range_val1.wages, 
-     xlab = "", ylab = "", col = mcxs2, lwd = 2, 
-     main = paste("Forecast", var_names[1]), bty = "n", xaxt = "n")
-
-lines((nrow(y) + 1):(nrow(y) + h), point.f2.wages, col = 'red', lwd = 2)
-axis(1, at = 1:(nrow(y) + h), labels = quarters, tick = TRUE, las = 2, cex.axis = 0.5)
-axis(1, at = year_positions, labels = unique_years, tick = FALSE, line = -0.1, cex.axis = 0.4)
-
-abline(v = nrow(y) + 1, col = mcxs1)
-polygon(c((nrow(y) + 1):(nrow(y) + h), rev((nrow(y) + 1):(nrow(y) + h))),
-        c(interval.f2.wages[1, ], rev(interval.f2.wages[2, ])), col = mcxs5_shade, border = mcxs5_shade)
-polygon(c((nrow(y) + 1):(nrow(y) + h), rev((nrow(y) + 1):(nrow(y) + h))),
-        c(interval.f1.wages[1, ], rev(interval.f1.wages[2, ])), col = mcxs2.shade1, border = mcxs2.shade1)
-legend("topleft", legend = c("Base", "T-Distr"), col = c(mcxs2, "red"), lwd = 2, cex = 0.6)
+single.forecast.plot(forecasts_norm, forecasts_t, y)
 ```
 
 ### Forecast horizons
@@ -1012,7 +1167,7 @@ persp3D(x = predictive.kernel_t$x, y = predictive.kernel_t$y, z = predictive.ker
 
 ```{r Forecast table}
 forecast.table2 <- function(Y.h1, Y.h2, y) {
-  forecast_table <- data.frame(
+  forecast_table2 <- data.frame(
     Period = integer(),
     Baseline_Forecast = numeric(),
     Extension_Forecast = numeric(),
@@ -1023,40 +1178,46 @@ forecast.table2 <- function(Y.h1, Y.h2, y) {
   
   n_periods <- dim(Y.h1)[1]
   
-  for (x in 1:1) {
-    point.f1.table2 <- apply(Y.h1[, x, ], 1, mean)
-    point.f2.table2 <- apply(Y.h2[, x, ], 1, mean)
-    
-    # Include period 0 (last observation from the data)
-    actual_value_0 <- y[nrow(y), x]
-    forecast_table <- rbind(forecast_table, data.frame(
-      Period = 0,
-      Baseline_Forecast = actual_value_0,
-      Extension_Forecast = actual_value_0,
-      Baseline_Percentage_Change = 0,
-      Extension_Percentage_Change = 0
-    ))
-    
-    for (period in 1:n_periods) {
-      # Calculate percentage changes for logged values
-      actual_value <- y[nrow(y) - n_periods + period, x]
-      baseline_pct_change <- ((exp(point.f1.table2[period]) - exp(actual_value)) / exp(actual_value)) * 100
-      extension_pct_change <- ((exp(point.f2.table2[period]) - exp(actual_value)) / exp(actual_value)) * 100
-      
-      forecast_table <- rbind(forecast_table, data.frame(
-        Period = period,
-        Baseline_Forecast = point.f1.table2[period],
-        Extension_Forecast = point.f2.table2[period],
-        Baseline_Percentage_Change = round(baseline_pct_change,2),
-        Extension_Percentage_Change = round(extension_pct_change,2)
-      ))
+  point.f1.table2 <- apply(Y.h1[, 1, ], 1, mean)
+  point.f2.table2 <- apply(Y.h2[, 1, ], 1, mean)
+  
+  # Include period 0 (last observation from the data)
+  actual_value_0 <- y[nrow(y), 1]
+  forecast_table2 <- rbind(forecast_table2, data.frame(
+    Period = 0,
+    Base_Forecast = actual_value_0,
+    Ext_Forecast = actual_value_0,
+    Base_Perc_Change = 0,
+    Ext_Perc_Change = 0
+  ))
+  
+  for (period in 1:n_periods) {
+    if (period == 1) {
+      previous_baseline_value <- actual_value_0
+      previous_extension_value <- actual_value_0
+    } else {
+      previous_baseline_value <- point.f1.table2[period - 1]
+      previous_extension_value <- point.f2.table2[period - 1]
     }
+    
+    baseline_pct_change <- ((exp(point.f1.table2[period]) - exp(previous_baseline_value)) / exp(previous_baseline_value)) * 100
+    extension_pct_change <- ((exp(point.f2.table2[period]) - exp(previous_extension_value)) / exp(previous_extension_value)) * 100
+    
+    forecast_table2 <- rbind(forecast_table2, data.frame(
+      Period = period,
+      Base_Forecast = point.f1.table2[period],
+      Ext_Forecast = point.f2.table2[period],
+      Base_Perc_Change = round(baseline_pct_change, 2),
+      Ext_Perc_Change = round(extension_pct_change, 2)
+    ))
   }
   
-  return(forecast_table)
+  return(forecast_table2)
 }
 
-forecast_table_out <- forecast.table2(forecasts_norm$Y.h, forecasts_t$Y.h, Y)
+forecast_table_out <- forecast.table2(forecasts_norm$Y.h, forecasts_t$Y.h, y)
+rownames(forecast_table_out) <- NULL
 print(forecast_table_out)
+
 ```
 # References {.unnumbered}

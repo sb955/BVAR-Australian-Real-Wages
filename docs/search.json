@@ -11,7 +11,7 @@
     "href": "index.html#theory-base",
     "title": "Forecasting Australian Real Wages",
     "section": "Theory base",
-    "text": "Theory base\nReal Wages defined as:\n\\[\\begin{align}\n\\log Real\\:wages = \\log Nominal\\:wages\\:- \\log CPI\n\\end{align}\\]"
+    "text": "Theory base\nReal Wages defined as:\n\\[\n\\log Real\\:wages = \\log Nominal\\:wages\\:- \\log CPI\n\\] # Data\nLabor data is retrieved from the Australian Bureau of Statistics (ABS) using the readabs function and the Reserve Bank of Australia (RBA) using readrba.\nThe ABS releases data on average weekly earnings biannually, in May and December As the latest data is from 4 months ago, we will utilize the Wage Price Index (WPI), which is measured quarterly (last released in December 2023).\nKey economic variables are incorporated to understand labor market and economic dynamics. Nominal and Real Wages assess purchasing power and income trends, with real wages adjusted using the Consumer Price Index (CPI) to account for inflation. Producer Prices, reflected by the Producer Price Index (PPI), provide insights into production costs and business environment.Export (EPI) and Import Indexes (IPI) are included to evaluate trade impacts and economic competitiveness. The Cost of Living Index (CLI) assesses consumer expenses, influencing economic welfare. Unemployment and Labor Participation Rates offer perspectives on labor market health and engagement. Log Hours Worked and Log Real GDP are used to analyze productivity trends and overall economic output."
   },
   {
     "objectID": "index.html#indicators",
@@ -32,7 +32,7 @@
     "href": "index.html#descriptive-analysis",
     "title": "Forecasting Australian Real Wages",
     "section": "Descriptive Analysis",
-    "text": "Descriptive Analysis\n\nData Overview\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nDate\nLog.of.Real.WPI\nLog.of.CPI\nLog.of.PPI\nLog.of.EXPI\nLog.of.IMPI\nLog.of.CLI\nlog.unempl\nlog.parti\nlog.h.worked\nLog.of.Real.GDP\n\n\n\n\n1998-12-01\n0.0233247\n4.216562\n4.261270\n3.899950\n4.624973\n4.188138\n1.954982\n4.143595\n15.14428\n12.63974\n\n\n1999-03-01\n0.0305035\n4.216562\n4.258446\n3.860730\n4.603168\n4.185099\n2.033353\n4.138257\n15.14749\n12.64707\n\n\n1999-06-01\n0.0332161\n4.220977\n4.261270\n3.832980\n4.576771\n4.188138\n1.922737\n4.136550\n15.15045\n12.65050\n\n\n1999-09-01\n0.0315212\n4.229749\n4.269697\n3.843744\n4.575741\n4.197202\n1.897081\n4.138318\n15.16141\n12.66185\n\n\n1999-12-01\n0.0327431\n4.235555\n4.278054\n3.885679\n4.597138\n4.200205\n1.848368\n4.144242\n15.17622\n12.67871\n\n\n\n\n\n\n\nData Plots\nThe accompanying graphs depict the recent trends in the selected economic indicators. Notably, the Real Wage Price Index has dropped significantly since the beginning of COVID in March 2020. Concurrently, the Consumer Price Index has exhibited larger growth rates in the same period. Recently, a slight upward trend in Real Wages can be observed, though they remain below pre-pandemic levels.\nOther indicators like Cost of Living Index, the Import Index and the Producer Price Index also reveal increasing trends, highlighting notable shifts in economic conditions, with Export Prices also shifting upwards. However, labor market conditions appear resilient, with falling unemployment, stable participation rates, and increased working hours. Real GDP’s upward trend suggests a recovery to pre-pandemic economic activity levels."
+    "text": "Descriptive Analysis\n\nData Overview\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nDate\nLog.of.Real.WPI\nLog.of.CPI\nLog.of.PPI\nLog.of.EXPI\nLog.of.IMPI\nLog.of.CLI\nlog.unempl\nlog.parti\nlog.h.worked\n\n\n\n\n1998-12-01\n0.0233247\n4.216562\n4.261270\n3.899950\n4.624973\n4.188138\n1.954982\n4.143595\n15.14427\n\n\n1999-03-01\n0.0305035\n4.216562\n4.258446\n3.860730\n4.603168\n4.185099\n2.033353\n4.138257\n15.14747\n\n\n1999-06-01\n0.0332161\n4.220977\n4.261270\n3.832980\n4.576771\n4.188138\n1.922737\n4.136550\n15.15047\n\n\n1999-09-01\n0.0315212\n4.229749\n4.269697\n3.843744\n4.575741\n4.197202\n1.897081\n4.138318\n15.16140\n\n\n1999-12-01\n0.0327431\n4.235555\n4.278054\n3.885679\n4.597138\n4.200205\n1.848368\n4.144242\n15.17622\n\n\n\n\n\n\n\nData Plots\nThe accompanying graphs depict the recent trends in the selected economic indicators. Notably, the Real Wage Price Index has dropped significantly since the beginning of COVID in March 2020. Concurrently, the Consumer Price Index has exhibited larger growth rates in the same period. Recently, a slight upward trend in Real Wages can be observed, though they remain below pre-pandemic levels.\nOther indicators like Cost of Living Index, the Import Index and the Producer Price Index also reveal increasing trends, highlighting notable shifts in economic conditions, with Export Prices also shifting upwards. However, labor market conditions appear resilient, with falling unemployment, stable participation rates, and increased working hours. Real GDP’s upward trend suggests a recovery to pre-pandemic economic activity levels."
   },
   {
     "objectID": "index.html#preliminary-data-analysis",
@@ -124,5 +124,12 @@
     "title": "Forecasting Australian Real Wages",
     "section": "Simulate draws from predictive density",
     "text": "Simulate draws from predictive density\n\nY.h         = array(NA,c(h,N,S))\n\nfor (s in 1:S){\n  x.Ti        = Y[(nrow(Y)-h+1):nrow(Y),]\n  x.Ti        = x.Ti[4:1,]\n  for (i in 1:h){\n    x.T         = c(1,as.vector(t(x.Ti)))\n    Y.h[i,,s]   = rmvnorm(1, mean = x.T%*%A.posterior[,,s], sigma=Sigma.posterior[,,s])\n    x.Ti        = rbind(Y.h[i,,s],x.Ti[1:3,])\n  }\n}"
+  },
+  {
+    "objectID": "index.html#stochastic-volatility",
+    "href": "index.html#stochastic-volatility",
+    "title": "Forecasting Australian Real Wages",
+    "section": "Stochastic volatility",
+    "text": "Stochastic volatility\nAs a further extension, stochastic volatility can be added to the model. Therefor, conditional heteroskedasticity will be defined as:\n\\[\nE|X \\sim\\mathcal{MN}_{T\\times N}\\left(0_{T\\times N},\\Sigma,\\text{diag}\\left(\\sigma^{2}\\right)\\right)\n\\]"
   }
 ]
