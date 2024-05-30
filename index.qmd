@@ -604,10 +604,10 @@ After rearranging terms, the Kernel of the posterior distribution can be obtaine
 &\times exp\{-\frac{1}{2}tr[\Sigma^{-1}\bar{s}]\},
 \end{align}
 ```
-which follows a multinomial-normal-inverse-wishart distribution:
+which follows a multivariate-normal-inverse-Wishart distribution:
 
 $$
-p(A, \Sigma|Y,X) \sim \operatorname{MNIW}(\bar{A}, \bar{\nu}, \bar{s}, \bar{v}).
+p(A, \Sigma|Y,X, \Omega) \sim \operatorname{MNIW}(\bar{A}, \bar{\nu}, \bar{s}, \bar{v}).
 $$
 
 The posterior parameters are then given as follows:
@@ -623,10 +623,10 @@ The posterior parameters are then given as follows:
 
 ### Distribution of $\lambda_t$
 
-The likelihood defines as
+For the sake of estimating $\lambda_t$ given data, $\lambda_i$ for $i\neq t$, and all other parameters, the likelihood update is given by
 
 $$
-L(A, \Sigma, \lambda | Y, X) = \lambda_t^{-\frac{N}{2}} \times \exp\left\{-\frac{1}{2} \frac{1}{\lambda_t} \epsilon_t' \Sigma^{-1} \epsilon_t \right\}.
+\lambda_t^{-\frac{N}{2}} \times \exp\left\{-\frac{1}{2} \frac{1}{\lambda_t} \epsilon_t' \Sigma^{-1} \epsilon_t \right\}.
 $$
 
 The prior density of $\lambda \sim \operatorname{IG2}(\nu_{\lambda}, \nu_{\lambda})$ defined as
