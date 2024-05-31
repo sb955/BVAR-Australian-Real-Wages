@@ -829,7 +829,7 @@ for (s in 1:S) {
   
   for (x in 1:t) {
     u_t <- Y.bv[x,] - t(X.bv[x,]) %*% A.posterior.draws[,,s]
-    lambda.posterior.draws[x, s] <- rinvgamma(1, N + lambda.nu[s], lambda.nu[s] + u_t %*% Sigma.posterior.draws[,,s] %*% t(u_t))
+    lambda.posterior.draws[x, s] <- rinvgamma(1, (N + lambda.nu[s])/2, (lambda.nu[s] + u_t %*% Sigma.posterior.draws[,,s] %*% t(u_t))/2)
   }
   
   if (s>=2){
