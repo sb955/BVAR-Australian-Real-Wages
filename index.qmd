@@ -754,6 +754,7 @@ A possible further extension of the model is the implementation of a sampling al
 #1st version
 library(MCMCpack)
 library(mvtnorm)
+library(RcppTN)
 
 set.seed(678)
 
@@ -834,7 +835,7 @@ for (s in 1:S) {
   if (s>=2){
     
     
-    lambda.nu.star <- rnorm(1, mean = lambda.nu[s-1], sd = var.lambda.nu)
+    lambda.nu.star <- RcppTN::rtn(1, .mean = lambda.nu[s-1], .sd = var.lambda.nu, .low = 0, .high = Inf)
     
     log_likelihood_star <- sum(dgamma(lambda.posterior.draws[,s], shape = lambda.nu.star, rate = lambda.nu.star, log = TRUE))
     log_prior_star <- dnorm(lambda.nu.star, mean = lambda.nu[s-1], sd = var.lambda.nu, log = TRUE)
