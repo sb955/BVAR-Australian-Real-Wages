@@ -756,10 +756,9 @@ library(MCMCpack)
 library(mvtnorm)
 library(RcppTN)
 
-set.seed(678)
 
 S = 100
-# Estimate initial parameters
+# Estimate initial parameterswdw
 
 rw_data = data.frame(matrix(nrow=100, ncol=2))
 rw_data[,1] = cumsum(rnorm(100,0,1))
