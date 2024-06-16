@@ -126,7 +126,7 @@ log.impi <- log(subset(read_abs(series_id = "A2295765J"), date >= as.Date(start.
 log.cli <- log(subset(read_abs(series_id = "A4083524T"), date >= as.Date(start.period) & date <= as.Date(end.period))$value)
 
 #real gdp
-log.real.gdp <- log(subset(read_rba_seriesid("GGDPCVGDP"), date >= as.Date("1998-12-07") & date <= as.Date("2024-03-07"))$value)
+log.real.gdp <- log(subset(read_rba_seriesid("GGDPCVGDP"), date >= as.Date("1998-12-07") & date <= as.Date("2024-06-05"))$value)
 
 # Get Log of Unemployment rate
 log.unempl <- read_abs(series_id = "A84423092X") |> 
@@ -179,7 +179,7 @@ df <- data.frame(
   "Log of EXPI" = log.expi,
   "Log of IMPI" = log.impi,
   "Log of CLI" = log.cli,
-  #"Log of Real GDP" = log.real.gdp,
+  "Log of Real GDP" = log.real.gdp,
   "Log of Unemployment" = log.unempl,
   "Log of Participation" = log.parti,
   "Log Hours Worked" = log.h.worked
@@ -200,14 +200,10 @@ The accompanying graphs depict the recent trends in the selected economic indica
 Other indicators like Cost of Living Index, the Import Index and the Producer Price Index also reveal increasing trends, highlighting notable shifts in economic conditions, with Export Prices also shifting upwards. However, labor market conditions appear resilient, with falling unemployment, stable participation rates, and increased working hours. Real GDP's upward trend suggests a recovery to pre-pandemic economic activity levels.
 
 ```{r PLOTS, echo=FALSE}
-# Plot data
-#par(mfrow = c(3, 3), mar = c(2, 2, 2, 2))
+par(mfrow = c(4, 3), mar = c(2, 2, 3, 2))
 
-#original_par <- par()
-#par(original_par)
 data.plots <- function(data, var_names){
-  par(mfrow = c(3, 3), mar = c(2, 2, 2, 2))
-  for (j in 2:ncol(data)) 
+   for (j in 2:ncol(data)) 
   plot(x = data$Date, y = data[, j], type = 'l',
        main = var_names[j-1], ylab = "", xlab = "",
        lwd = 2.5,
@@ -563,17 +559,19 @@ The likelihood is now given by
 
 ```{=tex}
 \begin{align}
-p(Y|A,\Sigma, \Omega) &= (2\pi)^{-\frac{TN}{2}} \det(\Omega)^{-\frac{T}{2}} det(\Sigma)^{-\frac{T}{2}} exp \left\{-\frac{1}{2} tr \left[ \Sigma^{-1}(A-\hat{A})'X'X(A-\hat{A}) \right] \right\}\\
-&\times exp \left\{-\frac{1}{2} tr \left[\Sigma^{-1}(Y-X \hat{A})'(Y-X \hat{A}) \right] \right\}.
+p(Y|A,\Sigma, \Omega) &= (2\pi)^{-\frac{TN}{2}} \det(\Omega)^{-\frac{N}{2}} det(\Sigma)^{-\frac{T}{2}} 
+&\times exp \left\{-\frac{1}{2} tr\left[\Sigma^{-1}(Y-X \hat{A})'\Omega^{-1}(Y-X \hat{A}) \right] \right\}.
 \end{align}
 ```
 
 In this framework, $A$ and $\Sigma$ will follow a normal-inverse-Wishart prior:
 
-$$
-\Sigma \sim \operatorname{IW}(\underline{s}, \underline{v}), \\
-\quad (\operatorname{vec}(A) \mid \Sigma) \sim \mathcal{N}(\operatorname{vec}(\underline{A}), \Sigma \otimes \underline{V})
-$$
+```{=tex}
+\begin{align}
+\Sigma &\sim \operatorname{IW}(\underline{s}, \underline{v}), \\
+\quad (\operatorname{vec}(A) \mid \Sigma) &\sim \mathcal{N}(\operatorname{vec}(\underline{A}), \Sigma \otimes \underline{V})
+\end{align}
+```
 
 with joint density
 
@@ -584,14 +582,15 @@ p(A, \Sigma) &= \det(\Sigma)^{-\frac{\nu +N+K}{2}} \times exp\{-\frac{1}{2} tr[\
 \end{align}
 ```
 
-The kernel of the joint posterior as our product of Likelihood and joint density is then expressed as
+Combining the likelihood and the priors yields
 
 ```{=tex}
 \begin{align}
 p(A,\Sigma|Y, \Omega) &\propto \det(\Sigma)^{-\frac{T}{2}} \times \det(\Omega)^{-\frac{N}{2}} \\
-&\times exp\{-\frac{1}{2}tr[\Sigma^{-1}(Y-XA)' \Omega^{-1} (Y-XA)]\} \\
-&\times \det(\Sigma)^{-\frac{N+K+\underline{v}+1}{2}} \times \det(\Sigma)^{-\frac{\nu +N+K}{2}}\\ 
-&\times exp\{-\frac{1}{2}tr[\Sigma^{-1}\underline{s}]\}
+&\times exp\{-\frac{1}{2}tr[\Sigma^{-1}(Y-X\underline{A})' \Omega^{-1} (Y-X \underline{A})]\} \\
+&\times \det(\Sigma)^{-\frac{\nu +N+K}{2}}\\ 
+&\times exp\{-\frac{1}{2}tr[\Sigma^{-1}\underline{s}]\}\\
+&\times exp\{-\frac{1}{2}tr[\Sigma^{-1}(A-\underline{A})'\underline{V}^{-1}(A-\underline{A})]\}.
 \end{align}
 ```
 
@@ -599,6 +598,7 @@ After rearranging terms, the Kernel of the posterior distribution can be obtaine
 
 ```{=tex}
 \begin{align}
+p(A,\Sigma|Y, \Omega)
 &= \det(\Sigma)^{-\frac{N+K+\bar{v}+1}{2}} \times \det(\Omega)^{-\frac{N}{2}}\\
 &\times exp\{-\frac{1}{2} tr[\Sigma^{-1}(A-\bar{A})'\bar{V}^{-1}(A-\bar{A})]\}\\
 &\times exp\{-\frac{1}{2}tr[\Sigma^{-1}\bar{s}]\},
@@ -607,7 +607,7 @@ After rearranging terms, the Kernel of the posterior distribution can be obtaine
 which follows a multivariate-normal-inverse-Wishart distribution:
 
 $$
-p(A, \Sigma|Y,X, \Omega) \sim \operatorname{MNIW}(\bar{A}, \bar{\nu}, \bar{s}, \bar{v}).
+p(A, \Sigma|Y,X, \Omega) \sim \operatorname{MNIW}(\bar{A}, \bar{\Sigma}, \bar{s}, \bar{v}).
 $$
 
 The posterior parameters are then given as follows:
@@ -661,10 +661,6 @@ Sampling algorithm:
 
 3. Draw $\lambda_t^{(s)}$ with $T$ $\lambda_t$ from $\operatorname{IG2} (\bar\nu_{\lambda},\bar{s}_{\lambda})$.
 
-(Extension
-
-4. Draw ${\nu_{\lambda}^*}^{(s)}$ from $\operatorname{N}(\nu^{s-1}, var_{\nu})$ applying the Metropolis-Hastings algorithm.)
-
 ```{r Posterior extension, echo=TRUE}
 posterior_t <- function(Y, X, p, S){
   
@@ -680,18 +676,18 @@ posterior_t <- function(Y, X, p, S){
   kappa.2   = 100
   K = 1 + (p*N)
   
+  ##################
+  #set priors
   A.prior     = matrix(0, K , N)
   A.prior[2:(N+1),] = diag(N)
   V.prior     = diag(c(kappa.2,kappa.1*((1:p)^(-2))%x%rep(1,N)))
   S.prior     = diag(diag(Sigma.hat))
   nu.prior    = N+1
   lambda.nu.prior = 5
-  
-  
-  
   lambda.0 = rinvgamma(t, lambda.nu.prior/2, lambda.nu.prior/2)
   
-  
+  ##################
+  #empty arrays
   Sigma.posterior.draws <- array(dim = c(N, N, S))
   A.posterior.draws <- array(dim = c(K, N, S))
   lambda.posterior.draws <- array(NA,c(t,S))
@@ -703,19 +699,23 @@ posterior_t <- function(Y, X, p, S){
     } else {
       lambda.s    = lambda.posterior.draws[,s-1]
     }
+    #initialize omega
     Omega = (diag(lambda.s))
     Omega.inv = diag(1/lambda.s)
     
+    #posterior parameters
     V.bar.ext       = solve(t(X)%*% Omega.inv%*%X + solve(V.prior))
     A.bar.ext       = V.bar.ext%*%(t(X)%*% Omega.inv%*%Y + solve(V.prior)%*%A.prior)
     nu.bar.ext      = t + nu.prior
     S.bar.ext       = S.prior + t(Y)%*% Omega.inv%*%Y + t(A.prior)%*%solve(V.prior)%*%A.prior - t(A.bar.ext)%*%solve(V.bar.ext)%*%A.bar.ext
     S.bar.ext.inv   = solve(S.bar.ext)
     
+    #Gibbs sampler
     Sigma.inv.draw = rWishart(1, nu.bar.ext, S.bar.ext.inv)[,,1]
     Sigma.posterior.draws[,,s] = solve(Sigma.inv.draw)
     A.posterior.draws[,,s] = matrix(mvtnorm::rmvnorm(1, mean=as.vector(A.bar.ext), sigma = Sigma.posterior.draws[,,s] %x% V.bar.ext), ncol=N)
     
+    #draw lambda
     for (x in 1:t){
     u_t <- Y[x,] - t(X[x,]) %*% A.posterior.draws[,,s]
     lambda = rinvgamma(1, N+lambda.nu.prior, lambda.nu.prior + u_t %*% Sigma.posterior.draws[,,s] %*% t(u_t) )
@@ -726,7 +726,6 @@ posterior_t <- function(Y, X, p, S){
   pris = (list(A.posterior.draws = A.posterior.draws, 
                Sigma.posterior.draws = Sigma.posterior.draws,
                lambda.posterior.draws=lambda.posterior.draws))
-
 }
 
 ```
@@ -746,34 +745,34 @@ round(apply(stats[[2]][,,s], 1:2, mean),2) * round(mean(stats[[3]][,1:1000]),2)
 
 One can observe, that the means represent the expected values, whereas the variances lie a bit further apart from 1.
 
-#### Include $\nu$ sampling
+### Extension: Degrees of freedom parameter  $\nu_\lambda$ 
 
-A possible further extension of the model is the implementation of a sampling algorithm for $\nu$. This can be applied using a Metropolis-Hastings structure.  
+A further extension of the model is the implementation of a sampling algorithm for $\nu_\lambda$. This can be applied using a Metropolis-Hastings structure.  
+
+
+4. Sample ${\nu_{\lambda}^*}^{(s)}$ from $\operatorname{TN}(\nu^{s-1}, var_{\nu})$ 
+
+The acceptance probability is set as 
+
+```{=tex}
+\begin{align}
+\alpha = min\{\frac {k(\nu_{\lambda}^*) * q(\nu_{\lambda}^*}{k(\nu_{\lambda}^{s-1}) * q(\nu_{\lambda}^{s-1} } \},
+\end{align}
+```
+
+where 
+
+Then, draw $u^{*}~U(0,1)$.
+If $u^{*}<\alpha$, set $v^{s}=v^{*}$,
+Otherwise, $v^{s}=v^{s-1}$. 
 
 ```{r nu_sampling, echo=TRUE }
-#1st version
-library(MCMCpack)
-library(mvtnorm)
 library(RcppTN)
 
+set.seed(1234)
 
-S = 100
-# Estimate initial parameterswdw
-
-rw_data = data.frame(matrix(nrow=100, ncol=2))
-rw_data[,1] = cumsum(rnorm(100,0,1))
-rw_data[,2] = cumsum(rnorm(100,0,1))
-
-
-y.bv <- ts(rw_data,  frequency=1)
-N = ncol(y.bv)
-p       = 1
-h       = 8
-Y.bv       = ts(y.bv[(p+1):nrow(y.bv),])
-X.bv      = matrix(1,nrow(Y.bv),1)
-for (i in 1:p){
-  X.bv     = cbind(X.bv,y.bv[(p+1):nrow(y.bv)-i,])
-}
+S = 1000
+# Estimate initial parameters
 
 A.hat = solve(t(X.bv) %*% X.bv) %*% t(X.bv) %*% Y.bv
 Sigma.hat = t(Y.bv - X.bv %*% A.hat) %*% (Y.bv - X.bv %*% A.hat) / nrow(Y.bv)
@@ -801,7 +800,7 @@ lambda.nu <- numeric(S)
 alpha <- numeric(S)
 ratio <- numeric(S)
 
-var.lambda.nu <- 1
+var.lambda.nu <- 0.5
 
 
 for (s in 1:S) {
@@ -832,20 +831,34 @@ for (s in 1:S) {
   }
   
   if (s>=2){
-    
-    
+    #######################################
+    #sample nu from a truncated normal distribution
     lambda.nu.star <- RcppTN::rtn(1, .mean = lambda.nu[s-1], .sd = var.lambda.nu, .low = 0, .high = Inf)
     
-    log_likelihood_star <- sum(dgamma(lambda.posterior.draws[,s], shape = lambda.nu.star/2, rate = lambda.nu.star/2, log = TRUE))
-    log_prior_star <- dnorm(lambda.nu.star, mean = lambda.nu[s-1], sd = var.lambda.nu, log = TRUE)
+    #######################################
+    #densities of proposed value
+    log_likelihood_star<- 1/sum((lambda.nu.star/2) * log(lambda.nu.star/2) - lgamma(lambda.nu.star/2) - (lambda.nu.star/2 + 1) * log(lambda.posterior.draws[,s]) - (lambda.nu.star/2) / lambda.posterior.draws[,s] )
+    #log_likelihood_star <- 1/(sum(dgamma(lambda.posterior.draws[,s], shape = lambda.nu.star/2, rate = lambda.nu.star/2, log = TRUE)))
+
+    log_prior_nu_star <- dexp(lambda.nu.star, rate = 1/5, log = TRUE)
+    #log_prior_nu_star <- dnorm(lambda.nu.star, mean = lambda.nu[s-1], sd = var.lambda.nu, log = TRUE)
+        
+    log_nu_truncnu_star <- log(RcppTN::dtn(lambda.nu.star, .mean = lambda.nu[s-1], .sd = var.lambda.nu))
     
-    log_likelihood_curr <- sum(dgamma(lambda.posterior.draws[,s], shape = lambda.nu.star/2, rate = lambda.nu.star/2, log = TRUE))
-    log_prior_curr <- dnorm(lambda.nu[s-1], mean = lambda.nu[s-1], sd = var.lambda.nu, log = TRUE)
+    #######################################
+    #densities of current value
+    log_likelihood_curr<- 1/sum((lambda.nu[s-1]/2) * log(lambda.nu[s-1]/2) - lgamma(lambda.nu[s-1]/2) - (lambda.nu[s-1]/2 + 1) * log(lambda.posterior.draws[,s]) - (lambda.nu[s-1]/2) / lambda.posterior.draws[,s] )
+    #log_likelihood_curr <- 1/(sum(dgamma(lambda.posterior.draws[,s], shape = lambda.nu[s-1]/2, rate = lambda.nu[s-1]/2, log = TRUE)))
     
-    log_ratio <- (log_likelihood_star + log_prior_star) - (log_likelihood_curr + log_prior_curr)
+    log_prior_nu_curr <- dexp(lambda.nu[s-1], rate = 1/5, log = TRUE)
+    #log_prior_nu_curr <- dnorm(lambda.nu[s-1], mean = lambda.nu[s-1], sd = var.lambda.nu, log = TRUE)
+    
+    log_nu_truncnu_curr <- log(RcppTN::dtn(lambda.nu[s-1], .mean = lambda.nu[s-1], .sd = var.lambda.nu))
+    
+    #calculate ratio 
+    log_ratio <- (log_likelihood_star + log_prior_nu_star + log_nu_truncnu_star) - (log_likelihood_curr + log_prior_nu_curr+ log_nu_truncnu_curr)
     
     ratio[s] <- exp(log_ratio)
-    
     alpha[s] <- min(1, ratio[s])
     
     if (runif(1) < alpha[s]) {
@@ -855,14 +868,16 @@ for (s in 1:S) {
     }
   }
 }
-acceptance_ratio <- sum(ratio[ratio < 1])
+median.lambda.nu <- median(lambda.nu)
 
-print(acceptance_ratio)
-
-# Plot the nu draws
-plot(lambda.nu, type = 'l', col = 'blue', lwd = 2, 
+# Plot nu draws
+plot(lambda.nu, type = 'l', col = 'black', lwd = 2, 
      main = expression(paste(lambda_nu, " draws")), 
      xlab = "Iteration", ylab = expression(lambda_nu))
+abline(h = median.lambda.nu, col = 'blue', lwd = 1)
+
+library(coda)
+print(1-rejectionRate(as.mcmc(lambda.nu)))
 ```
 
 ## Stochastic volatility
@@ -875,10 +890,134 @@ E|X \sim\mathcal{MN}_{T\times N}\left(0_{T\times N},\Sigma,\text{diag}\left(\sig
 $$
 
 ```{r}
+SVcommon.Gibbs.iteration = function(aux, priors){
+  # A single iteration of the Gibbs sampler for the SV component
+  #
+  # aux is a list containing:
+  #   Y - a TxN matrix
+  #   X - a TxK matrix
+  #   H - a Tx1 matrix
+  #   h0 - a scalar
+  #   sigma.v2 - a scalar
+  #   s - a Tx1 matrix
+  #   A - a KxN matrix
+  #   Sigma - an NxN matrix
+  #   sigma2 - a Tx1 matrix
+  #
+  # priors is a list containing:
+  #   h0.v - a positive scalar
+  #   h0.m - a scalar
+  #   sigmav.s - a positive scalar
+  #   sigmav.nu - a positive scalar
+  #   HH - a TxT matrix
+  
+  T             = dim(aux$Y)[1]
+  N             = dim(aux$Y)[2]
+  alpha.st      = c(1.92677,1.34744,0.73504,0.02266,0-0.85173,-1.97278,-3.46788,-5.55246,-8.68384,-14.65000)
+  sigma.st      = c(0.11265,0.17788,0.26768,0.40611,0.62699,0.98583,1.57469,2.54498,4.16591,7.33342)
+  pi.st         = c(0.00609,0.04775,0.13057,0.20674,0.22715,0.18842,0.12047,0.05591,0.01575,0.00115)
+  
+  Lambda        = solve(chol(aux$Sigma))
+  Z             = rowSums( ( aux$Y - aux$X %*% aux$A ) %*% Lambda ) / sqrt(N)
+  Y.tilde       = as.vector(log((Z + 0.0000001)^2))
+  Ytilde.alpha  = as.matrix(Y.tilde - alpha.st[as.vector(aux$s)])
+  
+  # sampling initial condition
+  ############################################################
+  V.h0.bar      = 1/((1 / priors$h0.v) + (1 / aux$sigma.v2))
+  m.h0.bar      = V.h0.bar*((priors$h0.m / priors$h0.v) + (aux$H[1] / aux$sigma.v2))
+  h0.draw       = rnorm(1, mean = m.h0.bar, sd = sqrt(V.h0.bar))
+  aux$h0        = h0.draw
+  
+  # sampling sigma.v2
+  ############################################################
+  sigma.v2.s    = priors$sigmav.s + sum(c(aux$H[1] - aux$h0, diff(aux$H))^2)
+  sigma.v2.draw = sigma.v2.s / rchisq(1, priors$sigmav.nu + T)
+  aux$sigma.v2  = sigma.v2.draw
+  
+  # sampling auxiliary states
+  ############################################################
+  Pr.tmp        = simplify2array(lapply(1:10,function(x){
+    dnorm(Y.tilde, mean = as.vector(aux$H + alpha.st[x]), sd = sqrt(sigma.st[x]), log = TRUE) + log(pi.st[x])
+  }))
+  Pr            = t(apply(Pr.tmp, 1, function(x){exp(x - max(x)) / sum(exp(x - max(x)))}))
+  s.cum         = t(apply(Pr, 1, cumsum))
+  r             = matrix(rep(runif(T), 10), ncol = 10)
+  ss            = apply(s.cum < r, 1, sum) + 1
+  aux$s         = as.matrix(ss)
+  
+  
+  # sampling log-volatilities using functions for tridiagonal precision matrix
+  ############################################################
+  Sigma.s.inv   = diag(1 / sigma.st[as.vector(aux$s)])
+  D.inv         = Sigma.s.inv + (1 / aux$sigma.v2) * priors$HH
+  b             = as.matrix(Ytilde.alpha / sigma.st[as.vector(aux$s)] + (aux$h0/aux$sigma.v2)*diag(T)[,1])
+  lead.diag     = diag(D.inv)
+  sub.diag      = mgcv::sdiag(D.inv, -1)
+  D.chol        = mgcv::trichol(ld = lead.diag, sd = sub.diag)
+  D.L           = diag(D.chol$ld)
+  mgcv::sdiag(D.L,-1) = D.chol$sd
+  x             = as.matrix(rnorm(T))
+  a             = forwardsolve(D.L, b)
+  draw          = backsolve(t(D.L), a + x)
+  aux$H         = as.matrix(draw)
+  aux$sigma2    = as.matrix(exp(draw))
 
+  return(aux)
+}
 
-test
+posterior.sv = function(Y,X,priors,S){
 
+  aux <- list(
+    Y = Y, 
+    X = X,  
+    H = matrix(1,T,1), 
+    h0 = 0, 
+    sigma.v2 = 1,
+    s = matrix(1,T,1),
+    A = matrix(0, K, N), 
+    Sigma = diag(diag(matrix(1, N, N))),
+    sigma2 = matrix(1, T, 1) 
+  )
+  
+  A.posterior        = array(NA, dim = c(K,N,sum(S)))
+  Sigma.posterior    = array(NA,dim=c(N,N,sum(S)))
+  sigma2.posterior    = matrix(NA, nrow(Y), sum(S)) 
+  
+  for (s in 1:sum(S)){
+    # normal-inverse Wishart posterior parameters
+    V.bar.inv   = t(X)%*%diag(1/as.vector(aux$sigma2))%*%X + diag(1/diag(priors$V.prior))
+    V.bar       = solve(V.bar.inv)
+    A.bar       = V.bar%*%(t(X)%*%diag(1/as.vector(aux$sigma2))%*%Y + diag(1/diag(priors$V.prior))%*%priors$A.prior)
+    nu.bar      = nrow(Y) + priors$nu.prior
+    S.bar       = priors$S.prior + t(Y)%*%diag(1/as.vector(aux$sigma2))%*%Y + t(priors$A.prior)%*%diag(1/diag(priors$V.prior))%*%priors$A.prior - t(A.bar)%*%V.bar.inv%*%A.bar
+    S.bar.inv   = solve(S.bar)
+    
+    #posterior draws
+    Sigma.posterior   = rWishart(sum(S), df=nu.bar, Sigma=S.bar.inv)
+    Sigma.posterior   = apply(Sigma.posterior,3,solve)
+    Sigma.posterior   = array(Sigma.posterior,c(N,N,sum(S)))
+    A.posterior       = array(rnorm(prod(c(dim(A.bar),sum(S)))),c(dim(A.bar),sum(S)))
+    L                 = t(chol(V.bar))
+    
+    # Draw using stochastic volatility Gibbs common sampler
+    A.posterior[,,s]= A.bar + L%*%A.posterior[,,s]%*%chol(Sigma.posterior[,,s])
+    aux = SVcommon.Gibbs.iteration(aux, priors)
+    sigma2.posterior[,s]  = aux$sigma2
+    
+  }
+  
+  posterior = list(
+    Sigma.posterior   = Sigma.posterior,
+    A.posterior       = A.posterior
+  )
+  return(posterior)
+}
+
+# Applying BVAR function
+posterior.draws.SV = BVAR(Y=Y, X=X, priors=priors, S=S)
+round(apply(posterior.draws.SV$Sigma.posterior, 1:2, mean),3)
+round(apply(posterior.draws.SV$A.posterior, 1:2, mean),3)
 ```
 
 
