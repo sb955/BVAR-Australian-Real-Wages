@@ -73,7 +73,12 @@ library(knitr)
 library(kableExtra)
 library(forecast)
 library(tseries)
-
+library(mvtnorm)
+library(plot3D)
+library(MASS)
+library(HDInterval)
+library(MCMCpack)
+library(mgcv)
 ```
 
 ```{r Colors , echo=FALSE,  message=FALSE, warning=FALSE, results='hide'}
@@ -162,7 +167,7 @@ log.h.worked <- read_rba_seriesid("GLFMHW") |>
   mutate(log_quarterly_sum = log(quarterly_sum)) |>
   select(log_quarterly_sum) |>
   rename(log.h.worked = log_quarterly_sum)
-
+  select(log.h.worked)
 ```
 
 ## Descriptive Analysis
@@ -296,15 +301,6 @@ rmarkdown::paged_table(adf_test_results, options = list(pageLength = 11))
 ```
 
 # The baseline model
-
-```{r  , echo=FALSE,  message=FALSE, warning=FALSE}
-#new libraries
-library(mvtnorm)
-library(plot3D)
-library(MASS)
-library(HDInterval)
-library(MCMCpack)
-```
 
 To provide a straightforward introduction, we will utilize a bivariate random walk model as a baseline. This approach will facilitate a clearer comprehension of the underlying theory.
 
@@ -718,7 +714,7 @@ posterior_t <- function(Y, X, p, S){
     #draw lambda
     for (x in 1:t){
     u_t <- Y[x,] - t(X[x,]) %*% A.posterior.draws[,,s]
-    lambda = rinvgamma(1, N+lambda.nu.prior, lambda.nu.prior + u_t %*% Sigma.posterior.draws[,,s] %*% t(u_t) )
+    lambda = rinvgamma(1, (N+lambda.nu.prior)/2, (lambda.nu.prior + u_t %*% Sigma.posterior.draws[,,s] %*% t(u_t))/2 )
     lambda.posterior.draws[x,s] <- lambda
     }
     
@@ -890,6 +886,66 @@ E|X \sim\mathcal{MN}_{T\times N}\left(0_{T\times N},\Sigma,\text{diag}\left(\sig
 $$
 
 ```{r}
+y <- ts(df, start=c(1998, 4), frequency=4)
+#N = ncol(y)
+p       = 4
+#K       = 1 + p*N
+#S       = 100
+#h       = 8
+Y       = ts(y[(p+1):nrow(y),])
+X       = matrix(1,nrow(Y),1)
+for (i in 1:p){
+  X     = cbind(X,y[(p+1):nrow(y)-i,])
+}
+
+
+A.hat       = solve(t(X)%*%X)%*%t(X)%*%Y
+Sigma.hat   = t(Y-X%*%A.hat)%*%(Y-X%*%A.hat)/nrow(Y)
+
+h       = 8
+S = c(100,100)
+N = ncol(Y)
+T = nrow(Y)
+K = 1 + (p*N)
+
+
+
+N = ncol(Y)
+t <- NROW(Y)
+kappa.1   = 1
+kappa.2   = 100
+K = 1 + (p*N)
+
+##################
+#set priors
+A.prior     = matrix(0, K , N)
+A.prior[2:(N+1),] = diag(N)
+V.prior     = diag(c(kappa.2,kappa.1*((1:p)^(-2))%x%rep(1,N)))
+S.prior     = diag(diag(Sigma.hat))
+nu.prior    = N+1
+lambda.nu.prior = 5
+lambda.0 = rinvgamma(t, lambda.nu.prior/2, lambda.nu.prior/2)
+
+H                 = diag(T)
+sdiag(H,-1)       = -1
+HH                = 2*diag(T)
+sdiag(HH,-1)      = -1
+sdiag(HH,1)       = -1
+
+priors = list(
+A.prior     = A.prior,
+V.prior     = V.prior,
+S.prior     = S.prior,
+nu.prior    = nu.prior,
+
+# New priors based on lectures
+h0.v        = 1,
+h0.m        = 0,
+sigmav.s    = 1,
+sigmav.nu   = 1, 
+HH          = HH 
+)
+
 SVcommon.Gibbs.iteration = function(aux, priors){
   # A single iteration of the Gibbs sampler for the SV component
   #
@@ -962,12 +1018,16 @@ SVcommon.Gibbs.iteration = function(aux, priors){
   draw          = backsolve(t(D.L), a + x)
   aux$H         = as.matrix(draw)
   aux$sigma2    = as.matrix(exp(draw))
-
+  
   return(aux)
 }
 
-posterior.sv = function(Y,X,priors,S){
+```
 
+
+```{r}
+posterior.sv = function(Y,X,priors,S){
+  
   aux <- list(
     Y = Y, 
     X = X,  
@@ -1007,19 +1067,106 @@ posterior.sv = function(Y,X,priors,S){
     
   }
   
-  posterior = list(
+  posterior.sv = list(
     Sigma.posterior   = Sigma.posterior,
     A.posterior       = A.posterior
   )
-  return(posterior)
+  return(posterior.sv)
 }
 
-# Applying BVAR function
-posterior.draws.SV = BVAR(Y=Y, X=X, priors=priors, S=S)
-round(apply(posterior.draws.SV$Sigma.posterior, 1:2, mean),3)
+# Applying function
+posterior.draws.SV = posterior.sv(Y=Y, X=X, priors=priors, S=S)
+round(apply(posterior.draws.SV$Sigma.posterior, 1:2, mean),8)
 round(apply(posterior.draws.SV$A.posterior, 1:2, mean),3)
 ```
 
+### StochasticV + T-distibution
+
+```{r}
+posterior.sv.t = function(Y,X,priors,S){
+  lambda.nu.prior = 5
+  lambda.0 = rinvgamma(t, lambda.nu.prior/2, lambda.nu.prior/2)
+  Omega = (diag(lambda.0))
+  Omega.inv = diag(1/Omega)
+  
+  aux <- list(
+    Y = sqrt(Omega.inv)%*%Y, 
+    X = sqrt(Omega.inv)%*%X,  
+    H = matrix(1,T,1), 
+    h0 = 0, 
+    sigma.v2 = 1,
+    s = matrix(1,T,1),
+    A = matrix(0, K, N), 
+    Sigma = diag(diag(matrix(1, N, N))),
+    sigma2 = matrix(1, T, 1) 
+  )
+  
+  A.posterior        = array(NA, dim = c(K,N,sum(S)))
+  Sigma.posterior    = array(NA,dim=c(N,N,sum(S)))
+  sigma2.posterior    = matrix(NA, nrow(Y), sum(S)) 
+  lambda.posterior.draws <- array(NA,c(t,S))
+  
+  for (s in 1:sum(S)){
+    if (s == 1) {
+      lambda.s = lambda.0
+    } else {
+      lambda.s    = lambda.posterior.draws[,s-1]
+      Omega = (diag(lambda.s))
+      Omega.inv = diag(1/Omega)
+      aux <- list(
+      Y = sqrt(Omega.inv)%*%Y, 
+      X = sqrt(Omega.inv)%*%X,  
+      H = matrix(1,T,1), 
+      h0 = 0, 
+      sigma.v2 = 1,
+      s = matrix(1,T,1),
+      A = matrix(0, K, N), 
+      Sigma = diag(diag(matrix(1, N, N))),
+      sigma2 = matrix(1, T, 1) 
+  )
+    }
+    Omega = (diag(lambda.s))
+    Omega.inv = diag(1/lambda.s)
+    # normal-inverse Wishart posterior parameters
+    V.bar.inv   = t(X)%*%diag(1/as.vector(aux$sigma2))%*%X + diag(1/diag(priors$V.prior))
+    V.bar       = solve(V.bar.inv)
+    A.bar       = V.bar%*%(t(X)%*%diag(1/as.vector(aux$sigma2))%*%Y + diag(1/diag(priors$V.prior))%*%priors$A.prior)
+    nu.bar      = nrow(Y) + priors$nu.prior
+    S.bar       = priors$S.prior + t(Y)%*%diag(1/as.vector(aux$sigma2))%*%Y + t(priors$A.prior)%*%diag(1/diag(priors$V.prior))%*%priors$A.prior - t(A.bar)%*%V.bar.inv%*%A.bar
+    S.bar.inv   = solve(S.bar)
+    
+    #posterior draws
+    Sigma.posterior   = rWishart(sum(S), df=nu.bar, Sigma=S.bar.inv)
+    Sigma.posterior   = apply(Sigma.posterior,3,solve)
+    Sigma.posterior   = array(Sigma.posterior,c(N,N,sum(S)))
+    A.posterior       = array(rnorm(prod(c(dim(A.bar),sum(S)))),c(dim(A.bar),sum(S)))
+    L                 = t(chol(V.bar))
+    
+    # Draw using stochastic volatility Gibbs common sampler
+    A.posterior[,,s]= A.bar + L%*%A.posterior[,,s]%*%chol(Sigma.posterior[,,s])
+    aux = SVcommon.Gibbs.iteration(aux, priors)
+    sigma2.posterior[,s]  = aux$sigma2
+    
+    #draw lambda
+    for (x in 1:t){
+      u_t <- Y[x,] - t(X[x,]) %*% A.posterior[,,s]
+      lambda = rinvgamma(1, (N+lambda.nu.prior)/2, (lambda.nu.prior + u_t %*% Sigma.posterior[,,s] %*% t(u_t))/2 )
+      lambda.posterior.draws[x,s] <- lambda
+    }
+    
+  }
+  
+  posterior.sv.t = list(
+    Sigma.posterior   = Sigma.posterior,
+    A.posterior       = A.posterior
+  )
+  return(posterior.sv.t)
+}
+
+posterior.draws.SV.t = posterior.sv.t(Y=Y, X=X, priors=priors, S=S)
+round(apply(posterior.draws.SV.t$Sigma.posterior, 1:2, mean),8)
+round(apply(posterior.draws.SV.t$A.posterior, 1:2, mean),3)
+```
 
 
 # Real Wage data forecasts
@@ -1085,7 +1232,7 @@ forecasts_t <- function(Y, A.posterior.draws, Sigma.posterior.draws, lambda.post
 
     for (i in 1:h){
       x.T         = c(1,as.vector(t(x.Ti)))
-      Y.h[i,,s]   = rmvnorm(1, mean = x.T%*%A.posterior.draws[,,s], sigma= Sigma.posterior.draws[,,s] %*% (lambda.posterior.draws[,s] %*% diag(t))) 
+      Y.h[i,,s]   = rmvnorm(1, mean = x.T%*%A.posterior.draws[,,s], sigma= (lambda.posterior.draws[,s] %*% diag(t)) %*% Sigma.posterior.draws[,,s]) 
       
       if (p==1){
         x.Ti        = Y.h[i,,s]
