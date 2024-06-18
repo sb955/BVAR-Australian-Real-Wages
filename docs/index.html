@@ -1207,6 +1207,7 @@ p(\lambda_t|Y,X,A,\Sigma) \sim \operatorname{IG2}(N+\nu_{\lambda}, \nu_{\lambda}
 9      8    0.08394467   0.09139034            -0.07            0.15</code></pre>
 </div>
 </div>
+<p>The table presents the forecasted values and growth rates at each quarter (8 period ahead).</p>
 </section>
 </section>
 <section id="extension-stochastic-volatility" class="level1">
@@ -1221,7 +1222,7 @@ L(A,\Sigma,\Lambda|Y,X) \propto \det(\Sigma)^{-\frac{T}{2}} \det( \text{diag}(\s
 \]</span> The posterior follows a matrix variate normal distribution</p>
 <p><span class="math display">\[p\left(A,\Sigma|Y,X\right)=MN\left(\bar{A},\bar{V},\bar{S},\bar{\nu}\right)\]</span> with posterior parameters</p>
 <span class="math display">\[\begin{align}
-bar{V}=\left(X'\text{diag}\left(\sigma^{2}\right)^{-1}X+\underline{V}^{-1}\right)^{-1}\\
+\bar{V}=\left(X'\text{diag}\left(\sigma^{2}\right)^{-1}X+\underline{V}^{-1}\right)^{-1}\\
 \bar{A}&amp;=\bar{V}\left(X'\text{diag}\left(\sigma^{2}\right)^{-1}Y+\underline{V}^{-1}\underline{A}\right)\\\
 \bar{S}&amp;=\underline{V}+Y'\text{diag}\left(\sigma^{2}\right)^{-1}Y+\underline{A}'\underline{V}^{-1}\underline{A}-\bar{A}'\bar{V}^{-1}\bar{A}\\\
 \bar{\nu}&amp;=T+\underline{\nu}.

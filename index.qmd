@@ -1290,6 +1290,7 @@ print(forecast_table_out)
 
 ```
 
+The table presents the forecasted values and growth rates at each quarter (8 period ahead).
 
 # 2.Extension: Stochastic volatility
 
@@ -1313,7 +1314,7 @@ $$p\left(A,\Sigma|Y,X\right)=MN\left(\bar{A},\bar{V},\bar{S},\bar{\nu}\right)$$
 with posterior parameters
 ```{=tex}
 \begin{align}
-bar{V}=\left(X'\text{diag}\left(\sigma^{2}\right)^{-1}X+\underline{V}^{-1}\right)^{-1}\\
+\bar{V}=\left(X'\text{diag}\left(\sigma^{2}\right)^{-1}X+\underline{V}^{-1}\right)^{-1}\\
 \bar{A}&=\bar{V}\left(X'\text{diag}\left(\sigma^{2}\right)^{-1}Y+\underline{V}^{-1}\underline{A}\right)\\\
 \bar{S}&=\underline{V}+Y'\text{diag}\left(\sigma^{2}\right)^{-1}Y+\underline{A}'\underline{V}^{-1}\underline{A}-\bar{A}'\bar{V}^{-1}\bar{A}\\\
 \bar{\nu}&=T+\underline{\nu}.
@@ -1650,7 +1651,7 @@ single.forecast.plot2 <- function(forecasts_norm, forecasts_t, y){
             c(interval.f1.wages[1, ], rev(interval.f1.wages[2, ])), col = mcxs2.shade1, border = mcxs2.shade1)
     polygon(c((nrow(y) + 1):(nrow(y) + h), rev((nrow(y) + 1):(nrow(y) + h))),
             c(interval.f2.wages[1, ], rev(interval.f2.wages[2, ])), col = mcxs5_shade, border = mcxs5_shade)
-    legend("topleft", legend = c("Base", "T-Distr"), col = c(mcxs2, "red"), lwd = 2, cex = 0.6)
+    legend("topleft", legend = c("Base", "SV"), col = c(mcxs2, "red"), lwd = 2, cex = 0.6)
 }
 
 single.forecast.plot2(forecasts_norm, forecasts_sv, y)
