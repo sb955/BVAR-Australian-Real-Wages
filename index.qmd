@@ -899,10 +899,16 @@ plot(lambda.nu, type = 'l', col = 'black', lwd = 2,
      main = expression(paste(lambda_nu, " draws")), 
      xlab = "Iteration", ylab = expression(lambda_nu))
 abline(h = median.lambda.nu, col = 'blue', lwd = 1)
+```
 
+Applying the sampling of $\nu$ on the artificial bivariate data reveals a tendency to settle around the value of 2. However, the values do not converge precisely within 1000 samples.
+
+```{r}
 library(coda)
 print(1-rejectionRate(as.mcmc(lambda.nu)))
 ```
+
+The acceptance rate is reported with approx ~69%. 
 
 
 # Real Wage data forecasts
@@ -1303,10 +1309,11 @@ $$
 The posterior follows a matrix variate normal distribution
 
 
-$$p\left(A,\Sigma|Y,X\right)&=MN\left(\bar{A},\bar{V},\bar{S},\bar{\nu}\right)\\\bar{V}=\left(X'\text{diag}\left(\sigma^{2}\right)^{-1}X+\underline{V}^{-1}\right)^{-1}$$
+$$p\left(A,\Sigma|Y,X\right)=MN\left(\bar{A},\bar{V},\bar{S},\bar{\nu}\right)$$
 with posterior parameters
 ```{=tex}
 \begin{align}
+bar{V}=\left(X'\text{diag}\left(\sigma^{2}\right)^{-1}X+\underline{V}^{-1}\right)^{-1}\\
 \bar{A}&=\bar{V}\left(X'\text{diag}\left(\sigma^{2}\right)^{-1}Y+\underline{V}^{-1}\underline{A}\right)\\\
 \bar{S}&=\underline{V}+Y'\text{diag}\left(\sigma^{2}\right)^{-1}Y+\underline{A}'\underline{V}^{-1}\underline{A}-\bar{A}'\bar{V}^{-1}\bar{A}\\\
 \bar{\nu}&=T+\underline{\nu}.
@@ -1613,7 +1620,7 @@ forecast.plots2 <- function(Y.h1, Y.h2, y){
 forecast.plots2(forecasts_norm$Y.h, forecasts_sv$Y.h, y)
 ```
 
-The forecast plots show deviating results in the SV model. Generelly, the predictions in the SV extensions are more positive than the baseline predictions. The SV predictions seem to capture more of the historical data trends. Adddiotionally. the SV modelshave smaller intervalls (68% level).
+The forecast plots exhibit divergent results in the SV model. Generally, the predictions in the SV extensions are more positive compared to the baseline predictions. The SV predictions appear to capture historical data trends more effectively. Additionally, the SV models have smaller intervals at the 68% confidence level.
 
 ### Real Wages Forecasts: Baseline and SV
 ```{r}
@@ -1648,6 +1655,11 @@ single.forecast.plot2 <- function(forecasts_norm, forecasts_t, y){
 
 single.forecast.plot2(forecasts_norm, forecasts_sv, y)
 ```
-Forecasting real wages using a stochastic volatility model predicts slightly increasing levels in the upcoming two years.
+Forecasting real wages with a stochastic volatility model indicates a slight increase in levels over the next two years.
+
+# Concluding Remarks
+
+The analysis of Australian real wages indicates stabilization over the next two years, with no evidence supporting a return to pre-COVID levels. Generally, the forecasts from both the t-distributed error terms model and the SV model show slightly more positive values. 
+Further improvements to the study are necessary, particularly in refining the forecasts of the t-distributed error terms and integrating these t-dsitributed errors in the SV model.
 
 # References {.unnumbered}
