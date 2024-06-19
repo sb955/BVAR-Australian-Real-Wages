@@ -792,128 +792,134 @@ Otherwise, $v^{s}=v^{s-1}$.
 
 ```{r nu_sampling, echo=TRUE }
 library(RcppTN)
-
-set.seed(1234)
-
-S = 1000
-# Estimate initial parameters
-
-A.hat = solve(t(X.bv) %*% X.bv) %*% t(X.bv) %*% Y.bv
-Sigma.hat = t(Y.bv - X.bv %*% A.hat) %*% (Y.bv - X.bv %*% A.hat) / nrow(Y.bv)
-
-t <- NROW(Y.bv)
-kappa.1 <- 0.02^2
-kappa.2 <- 100
-K = 1 + (p * N)
-
-A.prior = matrix(0, K, N)
-A.prior[2:(N + 1),] = diag(N)
-V.prior = diag(c(kappa.2, kappa.1 * ((1:p)^(-2)) %x% rep(1, N)))
-S.prior = diag(diag(Sigma.hat))
-nu.prior = N + 1
-lambda.nu.prior = 5
-
-# Initialize lambda
-lambda.0 = rinvgamma(t, lambda.nu.prior / 2, lambda.nu.prior / 2)
-
-# Initialize arrays for posterior draws
-Sigma.posterior.draws <- array(dim = c(N, N, S))
-A.posterior.draws <- array(dim = c(K, N, S))
-lambda.posterior.draws <- array(NA, c(t, S))
-lambda.nu <- numeric(S)
-alpha <- numeric(S)
-ratio <- numeric(S)
-
-var.lambda.nu <- 0.5
-
-
-for (s in 1:S) {
-  if (s == 1) {
-    lambda.s <- lambda.0
-    lambda.nu[s] <- lambda.nu.prior
-  } else {
-    lambda.s <- lambda.posterior.draws[, s - 1]
-    lambda.nu[s] <- lambda.nu[s-1]
-  }
+posterior.t.nu <- function(Y, X, p, S){
   
-  Omega <- diag(lambda.s)
-  Omega.inv <- diag(1 / lambda.s)
+  A.hat = solve(t(X) %*% X) %*% t(X) %*% Y
+  Sigma.hat = t(Y - X %*% A.hat) %*% (Y - X %*% A.hat) / nrow(Y)
   
-  V.bar.ext = solve(t(X.bv) %*% Omega.inv %*% X.bv + solve(V.prior))
-  A.bar.ext = V.bar.ext %*% (t(X.bv) %*% Omega.inv %*% Y.bv + solve(V.prior) %*% A.prior)
-  nu.bar.ext = t + nu.prior
-  S.bar.ext = S.prior + t(Y.bv) %*% Omega.inv %*% Y.bv + t(A.prior) %*% solve(V.prior) %*% A.prior - t(A.bar.ext) %*% solve(V.bar.ext) %*% A.bar.ext
-  S.bar.ext.inv = solve(S.bar.ext)
+  T <- nrow(Y)
+  N <- ncol(Y)
+  kappa.1 <- 1
+  kappa.2 <- 100
+  K = 1 + (p * N)
   
-  Sigma.inv.draw = rWishart(1, nu.bar.ext, S.bar.ext.inv)[,,1]
-  Sigma.posterior.draws[,,s] = solve(Sigma.inv.draw)
-  A.posterior.draws[,,s] = matrix(mvtnorm::rmvnorm(1, mean = as.vector(A.bar.ext), sigma = Sigma.posterior.draws[,,s] %x% V.bar.ext), ncol = N)
+  A.prior = matrix(0, K, N)
+  A.prior[2:(N + 1),] = diag(N)
+  V.prior = diag(c(kappa.2, kappa.1 * ((1:p)^(-2)) %x% rep(1, N)))
+  S.prior = diag(diag(Sigma.hat))
+  nu.prior = N + 1
+  lambda.nu.prior = 5
   
-  for (x in 1:t) {
-    u_t <- Y.bv[x,] - t(X.bv[x,]) %*% A.posterior.draws[,,s]
-    lambda.posterior.draws[x, s] <- rinvgamma(1, (N + lambda.nu[s])/2, (lambda.nu[s] + u_t %*% Sigma.posterior.draws[,,s] %*% t(u_t))/2)
-  }
+  # Initialize lambda
+  lambda.0 = rinvgamma(T, lambda.nu.prior / 2, lambda.nu.prior / 2)
   
-  if (s>=2){
-    #######################################
-    #sample nu from a truncated normal distribution
-    lambda.nu.star <- RcppTN::rtn(1, .mean = lambda.nu[s-1], .sd = var.lambda.nu, .low = 0, .high = Inf)
-    
-    #######################################
-    #densities of proposed value
-    log_likelihood_star<- 1/sum((lambda.nu.star/2) * log(lambda.nu.star/2) - lgamma(lambda.nu.star/2) - (lambda.nu.star/2 + 1) * log(lambda.posterior.draws[,s]) - (lambda.nu.star/2) / lambda.posterior.draws[,s] )
-    #log_likelihood_star <- 1/(sum(dgamma(lambda.posterior.draws[,s], shape = lambda.nu.star/2, rate = lambda.nu.star/2, log = TRUE)))
-
-    log_prior_nu_star <- dexp(lambda.nu.star, rate = 1/5, log = TRUE)
-    #log_prior_nu_star <- dnorm(lambda.nu.star, mean = lambda.nu[s-1], sd = var.lambda.nu, log = TRUE)
-        
-    log_nu_truncnu_star <- log(RcppTN::dtn(lambda.nu.star, .mean = lambda.nu[s-1], .sd = var.lambda.nu))
-    
-    #######################################
-    #densities of current value
-    log_likelihood_curr<- 1/sum((lambda.nu[s-1]/2) * log(lambda.nu[s-1]/2) - lgamma(lambda.nu[s-1]/2) - (lambda.nu[s-1]/2 + 1) * log(lambda.posterior.draws[,s]) - (lambda.nu[s-1]/2) / lambda.posterior.draws[,s] )
-    #log_likelihood_curr <- 1/(sum(dgamma(lambda.posterior.draws[,s], shape = lambda.nu[s-1]/2, rate = lambda.nu[s-1]/2, log = TRUE)))
-    
-    log_prior_nu_curr <- dexp(lambda.nu[s-1], rate = 1/5, log = TRUE)
-    #log_prior_nu_curr <- dnorm(lambda.nu[s-1], mean = lambda.nu[s-1], sd = var.lambda.nu, log = TRUE)
-    
-    log_nu_truncnu_curr <- log(RcppTN::dtn(lambda.nu[s-1], .mean = lambda.nu[s-1], .sd = var.lambda.nu))
-    
-    #calculate ratio 
-    log_ratio <- (log_likelihood_star + log_prior_nu_star + log_nu_truncnu_star) - (log_likelihood_curr + log_prior_nu_curr+ log_nu_truncnu_curr)
-    
-    ratio[s] <- exp(log_ratio)
-    alpha[s] <- min(1, ratio[s])
-    
-    if (runif(1) < alpha[s]) {
-      lambda.nu[s] <- lambda.nu.star
-    } else{
+  # Initialize arrays for posterior draws
+  Sigma.posterior.draws <- array(dim = c(N, N, S))
+  A.posterior.draws <- array(dim = c(K, N, S))
+  lambda.posterior.draws <- array(NA, c(T, S))
+  lambda.nu <- numeric(S)
+  alpha <- numeric(S)
+  ratio <- numeric(S)
+  
+  # set variance for nu 
+  var.lambda.nu <- 0.5
+  
+  
+  for (s in 1:S) {
+    if (s == 1) {
+      lambda.s <- lambda.0
+      lambda.nu[s] <- lambda.nu.prior
+    } else {
+      lambda.s <- lambda.posterior.draws[, s - 1]
       lambda.nu[s] <- lambda.nu[s-1]
     }
+    
+    Omega <- diag(lambda.s)
+    Omega.inv <- diag(1 / lambda.s)
+    
+    V.bar.ext = solve(t(X) %*% Omega.inv %*% X + solve(V.prior))
+    A.bar.ext = V.bar.ext %*% (t(X) %*% Omega.inv %*% Y + solve(V.prior) %*% A.prior)
+    nu.bar.ext = T + nu.prior
+    S.bar.ext = S.prior + t(Y) %*% Omega.inv %*% Y + t(A.prior) %*% solve(V.prior) %*% A.prior - t(A.bar.ext) %*% solve(V.bar.ext) %*% A.bar.ext
+    S.bar.ext.inv = solve(S.bar.ext)
+    
+    Sigma.inv.draw = rWishart(1, nu.bar.ext, S.bar.ext.inv)[,,1]
+    Sigma.posterior.draws[,,s] = solve(Sigma.inv.draw)
+    A.posterior.draws[,,s] = matrix(mvtnorm::rmvnorm(1, mean = as.vector(A.bar.ext), sigma = Sigma.posterior.draws[,,s] %x% V.bar.ext), ncol = N)
+    
+    for (x in 1:T) {
+      u_t <- Y[x,] - t(X[x,]) %*% A.posterior.draws[,,s]
+      lambda.posterior.draws[x, s] <- rinvgamma(1, (N + lambda.nu[s])/2, (lambda.nu[s] + u_t %*% Sigma.posterior.draws[,,s] %*% t(u_t))/2)
+    }
+    
+    if (s>=2){
+      #######################################
+      #sample nu from a truncated normal distribution
+      lambda.nu.star <- RcppTN::rtn(1, .mean = lambda.nu[s-1], .sd = var.lambda.nu, .low = 0, .high = Inf)
+      
+      #######################################
+      #densities of proposed value
+      log_likelihood_star<- 1/sum((lambda.nu.star/2) * log(lambda.nu.star/2) - lgamma(lambda.nu.star/2) - (lambda.nu.star/2 + 1) * log(lambda.posterior.draws[,s]) - (lambda.nu.star/2) / lambda.posterior.draws[,s] )
+      #log_likelihood_star <- 1/(sum(dgamma(lambda.posterior.draws[,s], shape = lambda.nu.star/2, rate = lambda.nu.star/2, log = TRUE)))
+      
+      log_prior_nu_star <- dexp(lambda.nu.star, rate = 1/5, log = TRUE)
+      #log_prior_nu_star <- dnorm(lambda.nu.star, mean = lambda.nu[s-1], sd = var.lambda.nu, log = TRUE)
+      
+      log_nu_truncnu_star <- log(RcppTN::dtn(lambda.nu.star, .mean = lambda.nu[s-1], .sd = var.lambda.nu))
+      
+      #######################################
+      #densities of current value
+      log_likelihood_curr<- 1/sum((lambda.nu[s-1]/2) * log(lambda.nu[s-1]/2) - lgamma(lambda.nu[s-1]/2) - (lambda.nu[s-1]/2 + 1) * log(lambda.posterior.draws[,s]) - (lambda.nu[s-1]/2) / lambda.posterior.draws[,s] )
+      #log_likelihood_curr <- 1/(sum(dgamma(lambda.posterior.draws[,s], shape = lambda.nu[s-1]/2, rate = lambda.nu[s-1]/2, log = TRUE)))
+      
+      log_prior_nu_curr <- dexp(lambda.nu[s-1], rate = 1/5, log = TRUE)
+      #log_prior_nu_curr <- dnorm(lambda.nu[s-1], mean = lambda.nu[s-1], sd = var.lambda.nu, log = TRUE)
+      
+      log_nu_truncnu_curr <- log(RcppTN::dtn(lambda.nu[s-1], .mean = lambda.nu[s-1], .sd = var.lambda.nu))
+      
+      #calculate ratio 
+      log_ratio <- (log_likelihood_star + log_prior_nu_star + log_nu_truncnu_star) - (log_likelihood_curr + log_prior_nu_curr+ log_nu_truncnu_curr)
+      
+      ratio[s] <- exp(log_ratio)
+      alpha[s] <- min(1, ratio[s])
+      
+      if (runif(1) < alpha[s]) {
+        lambda.nu[s] <- lambda.nu.star
+      } else{
+        lambda.nu[s] <- lambda.nu[s-1]
+      }
+    }
   }
+  list(
+    A.posterior.draws = A.posterior.draws,
+    Sigma.posterior.draws = Sigma.posterior.draws,
+    lambda.posterior.draws = lambda.posterior.draws,
+    lambda.nu = lambda.nu
+  )
+  
 }
-median.lambda.nu <- median(lambda.nu)
+rw.nu.results <- posterior.t.nu(Y.bv,X.bv,1,1000)
+
+median.lambda.nu.rw <- median(rw.nu.results$lambda.nu)
 
 # Plot nu draws
-plot(lambda.nu, type = 'l', col = 'black', lwd = 2, 
+plot(rw.nu.results$lambda.nu, type = 'l', col = 'black', lwd = 2, 
      main = expression(paste(lambda_nu, " draws")), 
      xlab = "Iteration", ylab = expression(lambda_nu))
-abline(h = median.lambda.nu, col = 'blue', lwd = 1)
+abline(h = median.lambda.nu.rw, col = 'blue', lwd = 1)
 ```
 
 Applying the sampling of $\nu$ on the artificial bivariate data reveals a tendency to settle around the value of 2. However, the values do not converge precisely within 1000 samples.
 
 ```{r}
 library(coda)
-print(1-rejectionRate(as.mcmc(lambda.nu)))
+print(1-rejectionRate(as.mcmc(rw.nu.results$lambda.nu)))
 ```
 
 The acceptance rate is reported with approx ~69%. 
 
 
 # Real Wage data forecasts
-
-Where the models data is defined as:
 
 ```{r Model set-up  , echo=FALSE, results='hide'}
 y <- ts(df, start=c(1998, 4), frequency=4)
@@ -927,7 +933,6 @@ X       = matrix(1,nrow(Y),1)
 for (i in 1:p){
   X     = cbind(X,y[(p+1):nrow(y)-i,])
 }
-
 h       = 8
 S       = 1000
 N = ncol(Y)
@@ -937,7 +942,23 @@ Sigma.hat   = t(Y-X%*%A.hat)%*%(Y-X%*%A.hat)/nrow(Y)
 
 ```
 
+### Sample $\nu_\lambda$ of data
+
+```{r nu.sample, echo=TRUE}
+post.t.nu.results <- posterior.t.nu(Y,X,4,1000)
+
+median.lambda.nu <- median(post.t.nu.results$lambda.nu)
+
+# Plot nu draws
+plot(post.t.nu.results$lambda.nu, type = 'l', col = 'black', lwd = 2, 
+     main = expression(paste(lambda_nu, " draws")), 
+     xlab = "Iteration", ylab = expression(lambda_nu))
+abline(h = median.lambda.nu, col = 'blue', lwd = 1)
+print(1-rejectionRate(as.mcmc(post.t.nu.results$lambda.nu)))
+```
+
 The baseline forecast function applies 1-step ahead predictive densities.
+
 ```{r forecast base functions, echo=TRUE}
 forecasts_base <- function(Y, A.posterior, Sigma.posterior, h, S, p){
   N = ncol(Y)
@@ -964,6 +985,7 @@ forecasts_base <- function(Y, A.posterior, Sigma.posterior, h, S, p){
 
 ```
 
+This code section where samples of future lambdas are sticked in the 1-period-ahead forecastsing densities is still in development phase.
 
 ```{r forecast t, echo=TRUE}
 forecast_t <- function(Y, A.posterior.draws, Sigma.posterior.draws, lambda.posterior.draws, h, S, p){
